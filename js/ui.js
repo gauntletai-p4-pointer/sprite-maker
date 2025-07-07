@@ -1,4 +1,4 @@
-import { generateSpriteStyles, generateSpriteAction, callOpenAIEdit } from './api.js';
+import { generateSpriteStyles, generateSpriteAction, callOpenAIGenerate } from './api.js';
 import { getState, updateState, updateUIState } from './state.js';
 import { STYLE_PROMPTS, ACTION_PROMPTS, generateSpritePrompt } from './prompts.js';
 import { CostCalculator } from './costCalculator.js';
@@ -582,11 +582,9 @@ async function regenerateFrame(actionId, frameIndex) {
     }
 
     // Generate new frame
-    const result = await callOpenAIEdit(
+    const result = await callOpenAIGenerate(
       customPrompt,
-      inputImage,
-      state.apiKey,
-      state.selectedModel
+      state.apiKey
     );
 
     // Update frame with new result

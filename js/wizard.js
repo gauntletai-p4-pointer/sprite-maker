@@ -499,7 +499,39 @@ function initWizard() {
 
   // Step-1 requirements
   const apiKeyInput = document.getElementById('apiKey');
-  apiKeyInput?.addEventListener('input', updateStep1Status);
+  
+  // Load API key from localStorage on initialization
+  if (apiKeyInput) {
+    const savedApiKey = localStorage.getItem('openai_api_key');
+    if (savedApiKey) {
+      apiKeyInput.value = savedApiKey;
+      updateState({ apiKey: savedApiKey });
+      console.log('Debug - Loaded API key from localStorage:', {
+        length: savedApiKey.length,
+        preview: savedApiKey.substring(0, 7) + '...'
+      });
+    }
+  }
+  
+  apiKeyInput?.addEventListener('input', (e) => {
+    console.log('Debug - API key input changed:', {
+      value: e.target.value ? e.target.value.substring(0, 7) + '...' : 'empty',
+      length: e.target.value ? e.target.value.length : 0
+    });
+    
+    // Store API key in state
+    updateState({ apiKey: e.target.value });
+    
+    // Also store in localStorage for persistence
+    if (e.target.value) {
+      localStorage.setItem('openai_api_key', e.target.value);
+    } else {
+      localStorage.removeItem('openai_api_key');
+    }
+    
+    // Update step status
+    updateStep1Status();
+  });
 
   const imageUpload = document.getElementById('imageUpload');
   imageUpload?.addEventListener('change', e => {
@@ -816,13 +848,20 @@ async function generateSingleStyle(styleId) {
   const state = getState();
   
   // Check if we already have the API dependencies
-  if (typeof callOpenAIEdit !== 'function') {
+  if (typeof callOpenAIGenerate !== 'function') {
     // Import the API module if not already available
     const apiModule = await import('./api.js');
-    window.callOpenAIEdit = apiModule.callOpenAIEdit;
+    window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
     window.generateSpritePrompt = (await import('./prompts.js')).generateSpritePrompt;
     window.makeStylePreview = (await import('./prompts.js')).makeStylePreview;
   }
+  
+  // Debug API key
+  console.log('Debug - API Key check:', {
+    hasApiKey: !!state.apiKey,
+    apiKeyLength: state.apiKey ? state.apiKey.length : 0,
+    apiKeyPreview: state.apiKey ? state.apiKey.substring(0, 7) + '...' : 'none'
+  });
   
   // Verify we have everything needed
   if (!state.apiKey) {
@@ -862,8 +901,8 @@ async function generateSingleStyle(styleId) {
     
     console.log(`Generated prompt for ${styleId}:`, prompt);
     
-    // Call the OpenAI API
-    const result = await window.callOpenAIEdit(prompt, state.uploadedImage);
+    // Call the OpenAI API (DALL-E 3 doesn't use input images)
+    const result = await window.callOpenAIGenerate(prompt, state.apiKey);
     
     // Store the result
     const generatedStyles = [...(state.generatedStyles || [])];
@@ -1409,7 +1448,7 @@ async function generateSelectedAction() {
     if (typeof window.generateSpriteAction !== 'function') {
       const apiModule = await import('./api.js');
       window.generateSpriteAction = apiModule.generateSpriteAction;
-      window.callOpenAIEdit = apiModule.callOpenAIEdit;
+      window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
       window.dataURLtoFile = apiModule.dataURLtoFile;
     }
     
@@ -1559,12 +1598,10 @@ async function generateSelectedAction() {
         
         console.log(`Generating frame ${i+1}/${frameCount} using ${i === 0 ? 'initial styled image' : 'previous frame'} as input`);
         
-        // Generate this frame using the OpenAI API directly
-        const result = await window.callOpenAIEdit(
+        // Generate this frame using the OpenAI API directly (DALL-E 3)
+        const result = await window.callOpenAIGenerate(
           enhancedPrompt,
-          currentInput,
-          state.apiKey,
-          state.selectedModel
+          state.apiKey
         ).catch(error => {
           console.error(`API call error for frame ${i+1}:`, error);
           throw new Error(`Failed to generate frame ${i+1}: ${error.message || 'API error'}`);
@@ -2349,9 +2386,9 @@ async function regenerateFrame(actionId, frameIndex) {
     closeFrameEditModal();
     
     // Make sure we have the API functions
-    if (typeof window.callOpenAIEdit !== 'function') {
+    if (typeof window.callOpenAIGenerate !== 'function') {
       const apiModule = await import('./api.js');
-      window.callOpenAIEdit = apiModule.callOpenAIEdit;
+      window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
     }
     
     // Find the appropriate input image for this frame regeneration
@@ -2438,12 +2475,10 @@ async function regenerateFrame(actionId, frameIndex) {
       inputImage = state.uploadedImage;
     }
     
-    // Generate new frame
-    const result = await window.callOpenAIEdit(
+    // Generate new frame (DALL-E 3)
+    const result = await window.callOpenAIGenerate(
       customPrompt,
-      inputImage,
-      state.apiKey,
-      state.selectedModel
+      state.apiKey
     ).catch(error => {
       console.error(`API call error when regenerating frame ${frameIndex}:`, error);
       throw new Error(`Failed to regenerate frame: ${error.message || 'API error'}`);
