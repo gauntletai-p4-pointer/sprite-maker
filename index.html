@@ -388,10 +388,14 @@
         padding: 0.75rem 1rem;
         color: var(--text-primary);
         resize: none;
-        min-height: 40px;
+        min-height: 90px;
         max-height: 120px;
-        font-size: 0.875rem;
+        font-size: 12px;
         line-height: 1.5;
+      }
+
+      .chat-input::placeholder {
+        font-size: 12px;
       }
 
       .chat-input:focus {
@@ -604,20 +608,20 @@
           </div>
         </section>
         
-        <!-- STEP 2 – Style - Skip this in the new interface -->
-        <section data-step="2" class="step-panel" id="style">
+        <!-- STEP 2 – Actions -->
+        <section data-step="2" class="step-panel" id="actions">
           <!-- Top action navigation -->
           <div class="flex items-center justify-between mb-8">
-            <button type="button" class="btn-secondary px-6 py-3 rounded-md" data-back="1">← Back to Upload</button>
+            <button type="button" class="btn-secondary px-6 py-3 rounded-md" data-back="1">← Back</button>
           </div>
           
-          <!-- Selected Style Preview and Image -->
+          <!-- Character Preview and Action Selection -->
           <div class="flex flex-col md:flex-row gap-6 mb-6">
-            <!-- Left side - Styled Image Preview -->
+            <!-- Left side - Character Preview -->
             <div class="w-full md:w-1/2 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
-              <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Generated Style</h3>
+              <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Your Character</h3>
               <div id="styledImageContainer" class="w-full flex items-center justify-center">
-                <img id="styledImagePreview" class="max-h-48 max-w-full rounded shadow object-contain" alt="Styled Preview" />
+                <img id="styledImagePreview" class="max-h-48 max-w-full rounded shadow object-contain" alt="Character Preview" />
               </div>
             </div>
             
@@ -702,8 +706,8 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           <textarea 
             id="chatInput" 
             class="chat-input" 
-            placeholder="Type your message..."
-            rows="1"
+            placeholder="Describe your character. For example, 'dog wearing sunglasses.'"
+            rows="3"
           ></textarea>
           <button id="chatSendBtn" class="chat-send-btn" title="Send message">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
@@ -740,9 +744,278 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         // Character generation is now handled through AI chat
         // No form validation needed for the placeholder box
         
-        // Chat functionality
+        // Chat functionality (wizard.js handles step initialization)
         initializeChat();
+        
+        // Listen for character generation events
+        document.addEventListener('characterGenerated', handleCharacterGenerated);
+        
+        // Set initial chat placeholder based on current step
+        setTimeout(() => {
+          const currentStep = getCurrentStepFromURL();
+          updateChatPlaceholder(currentStep);
+        }, 100);
+        
+        // Listen for URL changes to update placeholder
+        window.addEventListener('popstate', () => {
+          setTimeout(() => {
+            const currentStep = getCurrentStepFromURL();
+            updateChatPlaceholder(currentStep);
+          }, 100);
+        });
+        
+        // Also listen for pushstate events (manual navigation)
+        const originalPushState = history.pushState;
+        history.pushState = function() {
+          originalPushState.apply(history, arguments);
+          setTimeout(() => {
+            const currentStep = getCurrentStepFromURL();
+            updateChatPlaceholder(currentStep);
+          }, 100);
+        };
       });
+
+              /**
+         * Handles character generation events from the chat system
+         */
+        function handleCharacterGenerated(event) {
+          console.log('🎯 Character generated event received:', event.detail);
+          
+          const { imageUrl, navigateToStep2 } = event.detail;
+          
+          if (navigateToStep2) {
+            // Store the image globally
+            window.generatedCharacterUrl = imageUrl;
+            
+            // Wait a bit for wizard to be fully loaded, then navigate
+            setTimeout(() => {
+              // Try to use URL navigation to trigger wizard step change
+              const url = new URL(window.location);
+              url.searchParams.set('step', '2');
+              window.history.pushState({}, '', url);
+              
+              // Trigger a popstate event to make wizard react to URL change
+              window.dispatchEvent(new PopStateEvent('popstate'));
+              
+              // Also try to find and click the step 2 navigation if available
+              const step2Panel = document.querySelector('[data-step="2"]');
+              if (step2Panel) {
+                // Force show step 2 panel
+                document.querySelectorAll('.step-panel').forEach(panel => {
+                  panel.classList.remove('is-active');
+                  panel.style.display = 'none';
+                });
+                
+                step2Panel.classList.add('is-active');
+                step2Panel.style.display = 'block';
+                
+                // Set up the character image
+                setTimeout(() => {
+                  const styledImagePreview = document.getElementById('styledImagePreview');
+                  if (styledImagePreview && imageUrl) {
+                    styledImagePreview.src = imageUrl;
+                    styledImagePreview.style.width = '200px';
+                    styledImagePreview.style.height = '200px';
+                    styledImagePreview.style.objectFit = 'contain';
+                    console.log('✅ Character image set in step 2');
+                  }
+                  
+                  // Update chat placeholder for step 2
+                  updateChatPlaceholder(2);
+                  
+                  // Initialize action selection
+                  initializeStep2ActionSelection();
+                }, 100);
+              }
+              
+              console.log('✅ Navigated to step 2');
+            }, 100);
+          }
+        }
+
+        /**
+         * Gets current step from URL parameter
+         */
+        function getCurrentStepFromURL() {
+          const urlParams = new URLSearchParams(window.location.search);
+          return parseInt(urlParams.get('step')) || 1;
+        }
+
+        /**
+         * Updates chat input placeholder text based on current step
+         */
+        function updateChatPlaceholder(step) {
+          const chatInput = document.getElementById('chatInput');
+          if (chatInput) {
+            if (step === 1) {
+              chatInput.placeholder = "Describe your character. For example, 'dog wearing sunglasses.'";
+            } else if (step === 2) {
+              chatInput.placeholder = "Type your text here";
+            }
+            console.log(`📝 Chat placeholder updated for step ${step}`);
+          }
+        }
+
+        /**
+         * Initializes action selection for step 2
+         */
+        async function initializeStep2ActionSelection() {
+          console.log('🎯 [DEBUG] initializeStep2ActionSelection called from index.html');
+          
+          try {
+            const actionSelect = document.getElementById('actionSelect');
+            if (!actionSelect) {
+              console.warn('❌ [DEBUG] Action select element not found');
+              return;
+            }
+            
+            console.log('🔧 [DEBUG] Found actionSelect element:', actionSelect);
+            console.log('🔧 [DEBUG] Current options before clear:', actionSelect.options.length);
+            
+            // Clear existing options except the placeholder
+            while (actionSelect.options.length > 1) {
+              actionSelect.remove(1);
+            }
+            
+            console.log('🔧 [DEBUG] Options after clear:', actionSelect.options.length);
+            
+            // Import action prompts
+            const { ACTION_PROMPTS } = await import('./js/prompts.js');
+            
+            console.log('🔧 [DEBUG] ACTION_PROMPTS imported:', ACTION_PROMPTS);
+            
+            if (!ACTION_PROMPTS || Object.keys(ACTION_PROMPTS).length === 0) {
+              console.error('❌ [DEBUG] No actions found in ACTION_PROMPTS');
+              return;
+            }
+            
+            console.log(`🔧 [DEBUG] Loading ${Object.keys(ACTION_PROMPTS).length} actions`);
+            
+            // Add actions to select
+            Object.entries(ACTION_PROMPTS).forEach(([actionId, actionData]) => {
+              console.log(`🔧 [DEBUG] Adding action: ${actionId} - ${actionData.name}`);
+              const option = document.createElement('option');
+              option.value = actionId;
+              option.textContent = actionData.name;
+              option.dataset.frames = actionData.frames;
+              option.dataset.description = actionData.basePrompt;
+              actionSelect.appendChild(option);
+            });
+            
+            console.log('🔧 [DEBUG] Final options after population:', actionSelect.options.length);
+            
+            // Add change event listener
+            actionSelect.addEventListener('change', function() {
+              console.log('🔧 [DEBUG] Action selection changed to:', this.value);
+              const selectedOption = this.options[this.selectedIndex];
+              const actionDescription = document.getElementById('actionDescription');
+              const generateActionBtn = document.getElementById('generateActionBtn');
+              
+              if (selectedOption && selectedOption.value) {
+                if (actionDescription) {
+                  actionDescription.innerHTML = `
+                    <p class="font-medium">${selectedOption.textContent}</p>
+                    <p class="text-sm mt-1">${selectedOption.dataset.description}</p>
+                    <p class="text-xs mt-2 opacity-75">Frames: ${selectedOption.dataset.frames}</p>
+                  `;
+                  console.log('✅ [DEBUG] Updated action description');
+                }
+                
+                if (generateActionBtn) {
+                  generateActionBtn.disabled = false;
+                  console.log('✅ [DEBUG] Enabled generate button');
+                }
+              } else {
+                if (actionDescription) {
+                  actionDescription.textContent = 'Select an action to see its description and frame count.';
+                  console.log('🔧 [DEBUG] Reset action description');
+                }
+                
+                if (generateActionBtn) {
+                  generateActionBtn.disabled = true;
+                  console.log('🔧 [DEBUG] Disabled generate button');
+                }
+              }
+            });
+            
+            console.log('✅ [DEBUG] Action selection initialized from index.html');
+            
+          } catch (error) {
+            console.error('❌ [DEBUG] Error initializing action selection from index.html:', error);
+          }
+        }
+
+        /**
+         * Test function to manually populate action dropdown for debugging
+         */
+        window.testPopulateActions = async function() {
+          console.log('🧪 [TEST] Testing manual action population');
+          
+          const actionSelect = document.getElementById('actionSelect');
+          if (!actionSelect) {
+            console.error('❌ [TEST] Action select not found');
+            return;
+          }
+          
+          console.log('🧪 [TEST] ActionSelect found, current options:', actionSelect.options.length);
+          
+          // Manual test data
+          const testActions = {
+            'idle': { name: 'Idle Animation', frames: 4, basePrompt: 'Character in neutral standing pose' },
+            'walk': { name: 'Walking Animation', frames: 12, basePrompt: 'Character walking cycle' },
+            'jump': { name: 'Jump Animation', frames: 4, basePrompt: 'Character performing a vertical jump' }
+          };
+          
+          // Clear existing options except placeholder
+          while (actionSelect.options.length > 1) {
+            actionSelect.remove(1);
+          }
+          
+          // Add test options
+          Object.entries(testActions).forEach(([actionId, actionData]) => {
+            console.log(`🧪 [TEST] Adding test action: ${actionId}`);
+            const option = document.createElement('option');
+            option.value = actionId;
+            option.textContent = actionData.name;
+            option.dataset.frames = actionData.frames;
+            option.dataset.description = actionData.basePrompt;
+            actionSelect.appendChild(option);
+          });
+          
+          console.log('🧪 [TEST] Test population complete, options:', actionSelect.options.length);
+          return actionSelect.options.length;
+        };
+
+      /**
+       * Handles the next button functionality - integrates with existing wizard system
+       */
+      function handleNextClick() {
+        console.log('🚀 Next clicked');
+        
+        // Get the generated character image URL
+        const generatedImage = document.querySelector('#placeholderBox img');
+        if (generatedImage && generatedImage.src) {
+          // Store character image globally for wizard access
+          window.generatedCharacterUrl = generatedImage.src;
+          
+          // Create a custom event to notify the wizard system
+          const characterReadyEvent = new CustomEvent('characterGenerated', {
+            detail: {
+              imageUrl: generatedImage.src,
+              navigateToStep2: true
+            }
+          });
+          
+          // Dispatch the event
+          document.dispatchEvent(characterReadyEvent);
+          
+          console.log('✅ Character ready event dispatched');
+        } else {
+          console.error('❌ No generated character image found');
+        }
+      }
+
+      // Navigation functions removed - using event-based system
       
       // Chat functionality
       function initializeChat() {
@@ -943,6 +1216,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         function replaceCharacterPlaceholder(imageUrl) {
           console.log('🖼️ Replacing placeholder with generated image');
           
+          // Store the generated image URL globally for step 2
+          window.generatedCharacterUrl = imageUrl;
+          
           const placeholderContainer = document.getElementById('placeholderBox');
           if (placeholderContainer) {
             placeholderContainer.innerHTML = `
@@ -984,18 +1260,7 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           return `<button id="${id}" class="${classes}" onclick="handleNextClick()">Next</button>`;
         }
 
-        /**
-         * Handles the next button functionality
-         */
-        function handleNextClick() {
-          console.log('🚀 Next clicked');
-          // Add your step 2 navigation logic here
-          // For now, just show a message
-          console.log('Proceeding to step 2...');
-          
-          // You can add actual step navigation here
-          // Example: goToStep(2) if that function exists
-        }
+        // Navigation functions moved to global scope
 
         /**
          * Enables all next buttons for proceeding to step 2

@@ -646,11 +646,12 @@ function goToStep(stepNumber) {
     
     // For step 2, initialize action selection from generated style
     if (stepNumber === 2) {
+      console.log('🎯 [DEBUG] goToStep called for step 2');
       const state = getState();
       
       // Check if we have the required state data
       if (!state.selectedStyle || !state.uploadedImage) {
-        console.warn('Missing required data for step 2, showing loading state');
+        console.warn('⚠️ [DEBUG] Missing required data for step 2, showing loading state');
         
         // Show loading state in the action selection area
         const styledImagePreview = document.getElementById('styledImagePreview');
@@ -663,10 +664,10 @@ function goToStep(stepNumber) {
         setTimeout(() => {
           const updatedState = getState();
           if (updatedState.selectedStyle && updatedState.uploadedImage) {
-            console.log('State data now available, initializing step 2');
+            console.log('✅ [DEBUG] State data now available, calling initializeActionSelection');
             initializeActionSelection();
           } else {
-            console.error('Failed to load required data for step 2 after delay');
+            console.error('❌ [DEBUG] Failed to load required data for step 2 after delay');
             // Display error message in the UI
             const actionDescription = document.getElementById('actionDescription');
             if (actionDescription) {
@@ -681,6 +682,7 @@ function goToStep(stepNumber) {
         }, 500);
       } else {
         // We have the required data, proceed with initialization
+        console.log('✅ [DEBUG] Required data present, calling initializeActionSelection');
         initializeActionSelection();
       }
     }
@@ -2584,25 +2586,30 @@ window.regenerateFrame = regenerateFrame;
 //  Initialize action selection  //
 //////////////////////////////
 async function initializeActionSelection() {
-  console.log('Initializing action selection UI for step 2');
+  console.log('🔧 [DEBUG] initializeActionSelection called');
+  console.log('🔧 [DEBUG] Current state:', getState());
+  
   const state = getState();
   
   // Double-check that we have the required data
   if (!state.selectedStyle) {
-    console.error('Cannot initialize step 2: missing style selection');
+    console.error('❌ [DEBUG] Cannot initialize step 2: missing style selection');
     showActionError('Style selection missing', 'Please return to step 1 and select a style.');
     return;
   }
   
   if (!state.uploadedImage) {
-    console.error('Cannot initialize step 2: missing uploaded image');
+    console.error('❌ [DEBUG] Cannot initialize step 2: missing uploaded image');
     showActionError('Image upload missing', 'Please return to step 1 and upload an image.');
     return;
   }
   
+  console.log('✅ [DEBUG] Required data present, proceeding with initialization');
+  
   // Update the style preview in step 2
   const styledImagePreview = document.getElementById('styledImagePreview');
   if (styledImagePreview) {
+    console.log('🔧 [DEBUG] Found styledImagePreview element');
     // Set loading state
     styledImagePreview.src = 'media/loading.svg';
     styledImagePreview.alt = 'Loading style preview...';
@@ -2613,42 +2620,55 @@ async function initializeActionSelection() {
         styledImagePreview.src = generatedStyle.imageUrl;
         styledImagePreview.alt = `${state.selectedStyle} style preview`;
         styledImagePreview.classList.remove('hidden');
+        console.log('✅ [DEBUG] Set generated style image for preview');
       } else if (state.selectedStyle === 'original' && state.uploadedImageUrl) {
         // For original style, just show the uploaded image
         styledImagePreview.src = state.uploadedImageUrl;
         styledImagePreview.alt = 'Original image';
         styledImagePreview.classList.remove('hidden');
+        console.log('✅ [DEBUG] Set original image for preview');
       } else {
         // Fallback to placeholder
         styledImagePreview.src = 'media/style_previews/placeholder.svg';
         styledImagePreview.alt = 'Style preview';
         styledImagePreview.classList.remove('hidden');
+        console.log('⚠️ [DEBUG] Using placeholder for preview');
         
         console.warn(`No generated style image found for ${state.selectedStyle}, using placeholder.`);
       }
     } catch (error) {
-      console.error('Error displaying styled image:', error);
+      console.error('❌ [DEBUG] Error displaying styled image:', error);
       styledImagePreview.src = 'media/style_previews/placeholder.svg';
       styledImagePreview.alt = 'Style preview';
       styledImagePreview.classList.remove('hidden');
     }
+  } else {
+    console.warn('⚠️ [DEBUG] styledImagePreview element not found');
   }
   
   // Load actions from prompts.js
   try {
-    console.log('Loading actions from prompts.js');
+    console.log('🔧 [DEBUG] Loading actions from prompts.js');
     const actionSelect = document.getElementById('actionSelect');
     const actionDescription = document.getElementById('actionDescription');
     
+    console.log('🔧 [DEBUG] actionSelect element:', actionSelect);
+    console.log('🔧 [DEBUG] actionDescription element:', actionDescription);
+    
     if (actionSelect) {
+      console.log('🔧 [DEBUG] Current actionSelect options before clear:', actionSelect.options.length);
+      
       // Clear existing options except the placeholder
       while (actionSelect.options.length > 1) {
         actionSelect.remove(1);
       }
       
+      console.log('🔧 [DEBUG] actionSelect options after clear:', actionSelect.options.length);
+      
       // Import action prompts
       const { ACTION_PROMPTS } = await import('./prompts.js');
-      console.log(`Loaded ${Object.keys(ACTION_PROMPTS).length} actions from prompts.js`);
+      console.log('🔧 [DEBUG] ACTION_PROMPTS imported:', ACTION_PROMPTS);
+      console.log(`🔧 [DEBUG] Loaded ${Object.keys(ACTION_PROMPTS).length} actions from prompts.js`);
       
       if (!ACTION_PROMPTS || Object.keys(ACTION_PROMPTS).length === 0) {
         throw new Error('No actions found in ACTION_PROMPTS');
@@ -2656,6 +2676,7 @@ async function initializeActionSelection() {
       
       // Add actions to select
       Object.entries(ACTION_PROMPTS).forEach(([actionId, actionData]) => {
+        console.log(`🔧 [DEBUG] Adding action: ${actionId} - ${actionData.name}`);
         const option = document.createElement('option');
         option.value = actionId;
         option.textContent = actionData.name;
@@ -2664,8 +2685,11 @@ async function initializeActionSelection() {
         actionSelect.appendChild(option);
       });
       
+      console.log('🔧 [DEBUG] Final actionSelect options after population:', actionSelect.options.length);
+      
       // Add event listener to update description when action changes
       actionSelect.addEventListener('change', () => {
+        console.log('🔧 [DEBUG] Action selection changed to:', actionSelect.value);
         const selectedOption = actionSelect.options[actionSelect.selectedIndex];
         const generateActionBtn = document.getElementById('generateActionBtn');
         
@@ -2682,11 +2706,13 @@ async function initializeActionSelection() {
                 </span>
               </div>
             `;
+            console.log('✅ [DEBUG] Updated action description');
           }
           
           // Enable generate button
           if (generateActionBtn) {
             generateActionBtn.disabled = false;
+            console.log('✅ [DEBUG] Enabled generate button');
           }
           
           // Update state
@@ -2698,11 +2724,13 @@ async function initializeActionSelection() {
           // Disable generate button if no action is selected
           if (generateActionBtn) {
             generateActionBtn.disabled = true;
+            console.log('🔧 [DEBUG] Disabled generate button');
           }
           
           // Reset description
           if (actionDescription) {
             actionDescription.textContent = 'Select an action to see its description and frame count.';
+            console.log('🔧 [DEBUG] Reset action description');
           }
         }
       });
@@ -2711,14 +2739,15 @@ async function initializeActionSelection() {
       const generateActionBtn = document.getElementById('generateActionBtn');
       if (generateActionBtn) {
         generateActionBtn.disabled = !actionSelect.value;
+        console.log('🔧 [DEBUG] Initial generate button state:', !generateActionBtn.disabled);
       }
       
-      console.log('Action selection UI initialized successfully');
+      console.log('✅ [DEBUG] Action selection UI initialized successfully');
     } else {
       throw new Error('Action select element not found in the DOM');
     }
   } catch (error) {
-    console.error('Error loading actions:', error);
+    console.error('❌ [DEBUG] Error loading actions:', error);
     showActionError('Failed to load actions', error.message);
   }
 }
