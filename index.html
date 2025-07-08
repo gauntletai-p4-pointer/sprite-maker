@@ -543,7 +543,7 @@
       </header>
       
       <!-- Step indicator - progression tracker -->
-      <div class="flex items-center justify-center mb-12 max-w-sm mx-auto" id="stepper">
+      <!-- <div class="flex items-center justify-center mb-12 max-w-sm mx-auto" id="stepper">
         <div class="step flex items-center" data-step="1">
           <div class="step-circle active flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium">1</div>
           <div class="ml-2 mr-auto text-sm font-medium" style="color: var(--primary-color);">Describe</div>
@@ -555,7 +555,7 @@
           <div class="step-circle flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium">2</div>
           <div class="ml-2 text-sm font-medium" style="color: var(--text-muted);">Actions</div>
         </div>
-      </div>
+      </div> -->
       
       <!-- Main content -->
       <main class="relative">
@@ -599,7 +599,7 @@
 
           
           <!-- Navigation -->
-          <div class="flex justify-center">
+          <div class="flex justify-center" style="display: none;">
             <button id="toStep2" class="btn-primary px-8 py-3">Continue to Actions →</button>
           </div>
         </section>
@@ -851,9 +851,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             const currentStep = getCurrentStep();
             console.log('📍 Current step:', currentStep);
             
-            // If on step 1, bypass routing and generate character with DALL-E 3
+            // If on step 1, bypass routing and generate character
             if (currentStep === 1) {
-              console.log('🎨 Step 1 detected - bypassing routing, generating character with DALL-E 3');
+              console.log('🎨 Step 1 detected - bypassing routing, generating character');
               return await handleStep1CharacterGeneration(userMessage);
             }
             
@@ -899,12 +899,12 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         }
         
         /**
-         * Handles character generation for step 1 using DALL-E 3
+         * Handles character generation for step 1
          * @param {string} userMessage - The user's character description
          * @returns {Promise<string>} - Response message
          */
         async function handleStep1CharacterGeneration(userMessage) {
-          console.log('🎨 Starting DALL-E 3 character generation');
+          console.log('🎨 Starting character generation');
           console.log('📝 User prompt:', userMessage);
           
           try {
@@ -917,10 +917,10 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             
             console.log('🔄 Enhanced prompt:', enhancedPrompt);
             
-            // Call DALL-E 3 to generate the character
-            console.log('📡 Calling DALL-E 3...');
+            // Call API to generate the character
+            console.log('📡 Calling generation API...');
             const imageUrl = await callDALLE3(enhancedPrompt);
-            console.log('✅ DALL-E 3 generation complete');
+            console.log('✅ Character generation complete');
             
             // Replace the placeholder box with the generated image
             replaceCharacterPlaceholder(imageUrl);
@@ -928,10 +928,10 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             // Enable the continue button
             enableContinueButton();
             
-            return "Perfect! I've generated your character using DALL-E 3. You can see the result in the main panel above. When you're ready, click 'Continue to Actions →' to proceed to the animation step.";
+            return "Perfect! I've generated your character. You can see the result in the main panel above. If you like, I can generate a different version, just say the word. When you're ready, click 'Next' to proceed to the animation step.";
             
           } catch (error) {
-            console.error('❌ Error in DALL-E 3 character generation:', error);
+            console.error('❌ Error in character generation:', error);
             return `Sorry, I encountered an error generating your character: ${error.message}. Please try again with a different description.`;
           }
         }
@@ -947,32 +947,24 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           if (placeholderContainer) {
             placeholderContainer.innerHTML = `
               <div class="w-half max-w-2xl p-20">
+                <!-- Top Next Button -->
+                <div class="w-full flex justify-center mb-6">
+                  ${createNextButton('nextBtn-top', 'btn-primary px-8 py-3')}
+                </div>
+                
+                <!-- Generated Character Image -->
                 <div class="rounded-lg p-8 flex flex-col items-center justify-center" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
-                  <div class="text-center mb-4">
-                    <h3 class="text-2xl font-medium mb-2" style="color: var(--text-primary);">Your Generated Character</h3>
-                    <p class="text-sm" style="color: var(--text-secondary);">Character created with DALL-E 3</p>
-                  </div>
-                  
-                  <!-- Top Continue Button -->
-                  <div class="w-full flex justify-center mb-6">
-                    ${createContinueButton('continueBtn-top', 'btn-primary px-8 py-3 opacity-50 cursor-not-allowed')}
-                  </div>
-                  
-                  <!-- Generated Character Image -->
                   <div class="bg-white rounded-lg p-4 shadow-lg">
                     <img src="${imageUrl}" 
                          alt="Generated Character" 
                          style="width: 200px; height: 200px;"
                          class="w-[200px] h-[200px] object-contain rounded" />
                   </div>
-                  
-                  <!-- Bottom Continue Button -->
-                  <div class="text-center mt-6">
-                    <p class="text-sm mb-4" style="color: var(--text-secondary);">
-                      Ready to add animations and actions to your character?
-                    </p>
-                    ${createContinueButton('continueBtn-bottom', 'btn-primary px-8 py-3 opacity-50 cursor-not-allowed')}
-                  </div>
+                </div>
+                
+                <!-- Bottom Next Button -->
+                <div class="w-full flex justify-center mt-6">
+                  ${createNextButton('nextBtn-bottom', 'btn-primary px-8 py-3')}
                 </div>
               </div>
             `;
@@ -983,20 +975,20 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         }
         
         /**
-         * Creates a reusable continue button component
+         * Creates a reusable next button component
          * @param {string} id - Unique ID for the button
          * @param {string} classes - Additional CSS classes
          * @returns {string} - HTML string for the button
          */
-        function createContinueButton(id = 'continueBtn', classes = 'btn-primary px-8 py-3') {
-          return `<button id="${id}" class="${classes}" onclick="handleContinueToActions()">Continue to Actions →</button>`;
+        function createNextButton(id = 'nextBtn', classes = 'btn-primary px-8 py-3') {
+          return `<button id="${id}" class="${classes}" onclick="handleNextClick()">Next</button>`;
         }
 
         /**
-         * Handles the continue to actions functionality
+         * Handles the next button functionality
          */
-        function handleContinueToActions() {
-          console.log('🚀 Continue to Actions clicked');
+        function handleNextClick() {
+          console.log('🚀 Next clicked');
           // Add your step 2 navigation logic here
           // For now, just show a message
           console.log('Proceeding to step 2...');
@@ -1006,17 +998,29 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         }
 
         /**
-         * Enables all continue buttons for proceeding to step 2
+         * Enables all next buttons for proceeding to step 2
          */
         function enableContinueButton() {
-          const continueButtons = document.querySelectorAll('[id*="continueBtn"], #toStep2');
-          continueButtons.forEach(btn => {
+          const nextButtons = document.querySelectorAll('[id*="nextBtn"], #toStep2');
+          nextButtons.forEach(btn => {
             if (btn) {
               btn.disabled = false;
               btn.classList.remove('opacity-50', 'cursor-not-allowed');
             }
           });
-          console.log('✅ Continue buttons enabled');
+          
+          // Hide any extra buttons that might be added by other scripts
+          const extraButtons = document.querySelectorAll('button');
+          extraButtons.forEach(btn => {
+            if (btn.textContent.includes('Next') && 
+                !btn.id.includes('nextBtn') && 
+                btn.id !== 'toStep2' &&
+                btn.id !== 'chatSendBtn') {
+              btn.style.display = 'none';
+            }
+          });
+          
+          console.log('✅ Next buttons enabled');
         }
         
         function generateCategoryResponse(category, originalMessage) {
@@ -1024,7 +1028,7 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           
           switch (category) {
             case 'character':
-              return "I can help you create a character sprite! Based on your description, I'll generate a unique character using DALL-E 3. Please provide more details about your character's appearance, clothing, and style, and I'll create a sprite for you.";
+              return "I can help you create a character sprite! Based on your description, I'll generate a unique character. Please provide more details about your character's appearance, clothing, and style, and I'll create a sprite for you.";
               
             case 'idle':
               return "Great! I can generate an idle animation for your character. This will create a 4-frame breathing animation that shows your character in a natural standing pose. The animation will be ready for use in your game.";
