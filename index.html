@@ -514,6 +514,154 @@
         0%, 100% { opacity: 1; }
         50% { opacity: 0.7; }
       }
+
+      /* ===== Page Styling ===== */
+
+      /* Reference Images Upload Component Styles */
+      .reference-images-panel {
+        margin-bottom: 2rem;
+      }
+
+      .reference-upload-area {
+        border: 2px dashed var(--border-color);
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background-color: var(--surface-color);
+        cursor: pointer;
+      }
+
+      .reference-upload-area:hover {
+        border-color: var(--primary-color);
+        background-color: var(--background-color);
+      }
+
+      .reference-upload-area.drag-over {
+        border-color: var(--primary-color);
+        background-color: rgba(59, 130, 246, 0.1);
+        transform: scale(1.02);
+      }
+
+      .reference-upload-icon {
+        color: var(--text-muted);
+        margin-bottom: 1rem;
+        display: flex;
+        justify-content: center;
+      }
+
+      .reference-upload-title {
+        color: var(--text-primary);
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .reference-upload-subtitle {
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        margin-bottom: 1.5rem;
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .reference-upload-actions {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .reference-upload-or {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+
+      .reference-images-grid {
+        margin-top: 1.5rem;
+      }
+
+      .reference-images-header {
+        margin-bottom: 1rem;
+      }
+
+      .reference-images-header h4 {
+        color: var(--text-primary);
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .reference-thumbnails {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.75rem;
+        max-height: 120px;
+        overflow-y: auto;
+      }
+
+      .reference-thumbnail {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 2px solid var(--border-color);
+        background-color: var(--surface-color);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .reference-thumbnail:hover {
+        border-color: var(--primary-color);
+        transform: scale(1.05);
+      }
+
+      .reference-thumbnail img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+
+      .reference-thumbnail-remove {
+        position: absolute;
+        top: 2px;
+        right: 2px;
+        width: 16px;
+        height: 16px;
+        background-color: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+      }
+
+      .reference-thumbnail:hover .reference-thumbnail-remove {
+        opacity: 1;
+      }
+
+      .reference-thumbnail-remove:hover {
+        background-color: rgba(220, 38, 38, 1);
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .reference-upload-area {
+          padding: 1.5rem;
+        }
+        
+        .reference-thumbnails {
+          grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+          gap: 0.5rem;
+        }
+      }
     </style>
   </head>
   <body class="h-full antialiased chat-open" style="color: var(--text-primary);">
@@ -565,6 +713,41 @@
       <main class="relative">
         <!-- STEP 1 – Describe -->
         <section data-step="1" class="step-panel is-active" id="describe">
+          <!-- Reference Images Upload Component -->
+          <div class="reference-images-panel">
+            <div class="reference-upload-area" id="referenceUploadArea">
+              <div class="reference-upload-content">
+                <div class="reference-upload-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="9" cy="9" r="2"/>
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                  </svg>
+                </div>
+                <h3 class="reference-upload-title">Upload Reference Images Here</h3>
+                <p class="reference-upload-subtitle">Create a unified visual aesthetic to inform the design of all game assets</p>
+                <div class="reference-upload-actions">
+                  <button type="button" class="btn-secondary" id="referenceSelectBtn">
+                    Select Images
+                  </button>
+                  <span class="reference-upload-or">or drag and drop here</span>
+                </div>
+              </div>
+              <input type="file" id="referenceFileInput" multiple accept="image/*" style="display: none;">
+            </div>
+            
+            <!-- Reference Images Grid -->
+            <div class="reference-images-grid" id="referenceImagesGrid" style="display: none;">
+              <div class="reference-images-header">
+                <h4>Reference Images</h4>
+                <p class="text-sm text-gray-400">Visual branding and aesthetic of these images will inform generations</p>
+              </div>
+              <div class="reference-thumbnails" id="referenceThumbnails">
+                <!-- Thumbnails will be dynamically added here -->
+              </div>
+            </div>
+          </div>
+
           <!-- Top action navigation -->
           <div class="flex items-center justify-between mb-8">
             <!-- Buttons removed -->
@@ -610,6 +793,41 @@
         
         <!-- STEP 2 – Actions -->
         <section data-step="2" class="step-panel" id="actions">
+          <!-- Reference Images Upload Component -->
+          <div class="reference-images-panel">
+            <div class="reference-upload-area" id="referenceUploadArea2">
+              <div class="reference-upload-content">
+                <div class="reference-upload-icon">
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                    <circle cx="9" cy="9" r="2"/>
+                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                  </svg>
+                </div>
+                <h3 class="reference-upload-title">Upload Reference Images Here</h3>
+                <p class="reference-upload-subtitle">Create a unified visual aesthetic to inform the design of all game assets</p>
+                <div class="reference-upload-actions">
+                  <button type="button" class="btn-secondary" id="referenceSelectBtn2">
+                    Select Images
+                  </button>
+                  <span class="reference-upload-or">or drag and drop here</span>
+                </div>
+              </div>
+              <input type="file" id="referenceFileInput2" multiple accept="image/*" style="display: none;">
+            </div>
+            
+            <!-- Reference Images Grid -->
+            <div class="reference-images-grid" id="referenceImagesGrid2" style="display: none;">
+              <div class="reference-images-header">
+                <h4>Reference Images</h4>
+                <p class="text-sm text-gray-400">Visual branding and aesthetic of these images will inform generations</p>
+              </div>
+              <div class="reference-thumbnails" id="referenceThumbnails2">
+                <!-- Thumbnails will be dynamically added here -->
+              </div>
+            </div>
+          </div>
+
           <!-- Top action navigation -->
           <div class="flex items-center justify-between mb-8">
             <button type="button" class="btn-secondary px-6 py-3 rounded-md" data-back="1">← Back</button>
@@ -743,6 +961,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         
         // Character generation is now handled through AI chat
         // No form validation needed for the placeholder box
+        
+        // Initialize reference images system
+        initReferenceImages();
         
         // Chat functionality (wizard.js handles step initialization)
         initializeChat();
@@ -2366,6 +2587,291 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           return false;
         }
       };
+
+      /**
+       * Reference Images Management System
+       * Handles upload, storage, and display of reference images across all steps
+       */
+      
+      // Storage key for persistence
+      const REFERENCE_IMAGES_STORAGE_KEY = 'pointer_reference_images';
+      
+      // Initialize reference images system
+      function initReferenceImages() {
+        console.log('🖼️ Initializing reference images system');
+        
+        // Initialize for both step 1 and step 2
+        setupReferenceUpload('', '');  // Step 1
+        setupReferenceUpload('2', '2'); // Step 2
+        
+        // Load existing images from storage
+        loadReferenceImagesFromStorage();
+      }
+      
+      /**
+       * Sets up reference upload functionality for a specific step
+       * @param {string} suffix - Suffix for element IDs (e.g., '2' for step 2)
+       * @param {string} stepSuffix - Suffix for thumbnail container (e.g., '2' for step 2)
+       */
+      function setupReferenceUpload(suffix = '', stepSuffix = '') {
+        const uploadArea = document.getElementById(`referenceUploadArea${suffix}`);
+        const fileInput = document.getElementById(`referenceFileInput${suffix}`);
+        const selectBtn = document.getElementById(`referenceSelectBtn${suffix}`);
+        
+        if (!uploadArea || !fileInput || !selectBtn) {
+          console.warn(`⚠️ Reference upload elements not found for step ${suffix || '1'}`);
+          return;
+        }
+        
+        // File input change handler
+        fileInput.addEventListener('change', (e) => {
+          handleFileSelection(e.target.files);
+        });
+        
+        // Select button click handler
+        selectBtn.addEventListener('click', () => {
+          fileInput.click();
+        });
+        
+        // Upload area click handler
+        uploadArea.addEventListener('click', (e) => {
+          if (e.target === uploadArea || e.target.closest('.reference-upload-content')) {
+            fileInput.click();
+          }
+        });
+        
+        // Drag and drop handlers
+        uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('drag-over');
+        });
+        
+        uploadArea.addEventListener('dragleave', (e) => {
+          e.preventDefault();
+          // Only remove drag-over if we're leaving the upload area entirely
+          if (!uploadArea.contains(e.relatedTarget)) {
+            uploadArea.classList.remove('drag-over');
+          }
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('drag-over');
+          
+          const files = Array.from(e.dataTransfer.files).filter(file => 
+            file.type.startsWith('image/')
+          );
+          
+          if (files.length > 0) {
+            handleFileSelection(files);
+          }
+        });
+      }
+      
+      /**
+       * Handles file selection (from input or drag-drop)
+       * @param {FileList|Array} files - Selected files
+       */
+      function handleFileSelection(files) {
+        console.log('📁 Processing reference image files:', files.length);
+        
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length === 0) {
+          alert('Please select only image files.');
+          return;
+        }
+        
+        // Process each image file
+        imageFiles.forEach(file => {
+          if (file.size > 10 * 1024 * 1024) { // 10MB limit
+            alert(`File "${file.name}" is too large. Please select images under 10MB.`);
+            return;
+          }
+          
+          // Convert to data URL and store
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            addReferenceImage({
+              id: Date.now() + Math.random().toString(36).substr(2, 9),
+              name: file.name,
+              dataUrl: e.target.result,
+              size: file.size,
+              type: file.type,
+              uploadDate: new Date().toISOString()
+            });
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      
+      /**
+       * Adds a reference image to storage and displays it
+       * @param {Object} imageData - Image data object
+       */
+      function addReferenceImage(imageData) {
+        console.log('➕ Adding reference image:', imageData.name);
+        
+        // Get existing images from storage
+        const existingImages = getReferenceImagesFromStorage();
+        
+        // Add new image
+        existingImages.push(imageData);
+        
+        // Save to storage
+        localStorage.setItem(REFERENCE_IMAGES_STORAGE_KEY, JSON.stringify(existingImages));
+        
+        // Update display in both steps
+        updateReferenceImagesDisplay();
+        
+        console.log('✅ Reference image added and saved');
+      }
+      
+      /**
+       * Removes a reference image by ID
+       * @param {string} imageId - ID of image to remove
+       */
+      function removeReferenceImage(imageId) {
+        console.log('🗑️ Removing reference image:', imageId);
+        
+        const existingImages = getReferenceImagesFromStorage();
+        const filteredImages = existingImages.filter(img => img.id !== imageId);
+        
+        // Save updated list
+        localStorage.setItem(REFERENCE_IMAGES_STORAGE_KEY, JSON.stringify(filteredImages));
+        
+        // Update display
+        updateReferenceImagesDisplay();
+        
+        console.log('✅ Reference image removed');
+      }
+      
+      /**
+       * Gets reference images from localStorage
+       * @returns {Array} Array of image data objects
+       */
+      function getReferenceImagesFromStorage() {
+        try {
+          const stored = localStorage.getItem(REFERENCE_IMAGES_STORAGE_KEY);
+          return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+          console.error('❌ Error loading reference images from storage:', error);
+          return [];
+        }
+      }
+      
+      /**
+       * Loads and displays reference images from storage
+       */
+      function loadReferenceImagesFromStorage() {
+        console.log('📁 Loading reference images from storage');
+        updateReferenceImagesDisplay();
+      }
+      
+      /**
+       * Updates the display of reference images in both steps
+       */
+      function updateReferenceImagesDisplay() {
+        const images = getReferenceImagesFromStorage();
+        
+        // Update step 1
+        updateStepReferenceDisplay('', images);
+        
+        // Update step 2
+        updateStepReferenceDisplay('2', images);
+        
+        console.log(`🖼️ Updated reference images display: ${images.length} images`);
+      }
+      
+      /**
+       * Updates reference images display for a specific step
+       * @param {string} suffix - Step suffix ('' for step 1, '2' for step 2)
+       * @param {Array} images - Array of image data
+       */
+      function updateStepReferenceDisplay(suffix, images) {
+        const grid = document.getElementById(`referenceImagesGrid${suffix}`);
+        const thumbnailsContainer = document.getElementById(`referenceThumbnails${suffix}`);
+        const uploadArea = document.getElementById(`referenceUploadArea${suffix}`);
+        
+        if (!grid || !thumbnailsContainer || !uploadArea) {
+          return;
+        }
+        
+        if (images.length === 0) {
+          // No images - show upload area, hide grid
+          uploadArea.style.display = 'block';
+          grid.style.display = 'none';
+        } else {
+          // Has images - show grid, hide upload area
+          uploadArea.style.display = 'none';
+          grid.style.display = 'block';
+          
+          // Clear existing thumbnails
+          thumbnailsContainer.innerHTML = '';
+          
+          // Add thumbnails
+          images.forEach(image => {
+            const thumbnail = createThumbnailElement(image);
+            thumbnailsContainer.appendChild(thumbnail);
+          });
+          
+          // Add "add more" button
+          const addMoreBtn = document.createElement('div');
+          addMoreBtn.className = 'reference-thumbnail';
+          addMoreBtn.style.border = '2px dashed var(--border-color)';
+          addMoreBtn.style.display = 'flex';
+          addMoreBtn.style.alignItems = 'center';
+          addMoreBtn.style.justifyContent = 'center';
+          addMoreBtn.style.cursor = 'pointer';
+          addMoreBtn.innerHTML = `
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          `;
+          addMoreBtn.title = 'Add more images';
+          addMoreBtn.addEventListener('click', () => {
+            document.getElementById(`referenceFileInput${suffix}`).click();
+          });
+          
+          thumbnailsContainer.appendChild(addMoreBtn);
+        }
+      }
+      
+      /**
+       * Creates a thumbnail element for an image
+       * @param {Object} imageData - Image data object
+       * @returns {HTMLElement} Thumbnail element
+       */
+      function createThumbnailElement(imageData) {
+        const thumbnail = document.createElement('div');
+        thumbnail.className = 'reference-thumbnail';
+        thumbnail.title = imageData.name;
+        
+        thumbnail.innerHTML = `
+          <img src="${imageData.dataUrl}" alt="${imageData.name}" />
+          <button class="reference-thumbnail-remove" title="Remove image" onclick="removeReferenceImage('${imageData.id}')">
+            ×
+          </button>
+        `;
+        
+        return thumbnail;
+      }
+      
+      /**
+       * Gets all reference images for use in character generation
+       * @returns {Array} Array of image data URLs
+       */
+      function getReferenceImagesForGeneration() {
+        const images = getReferenceImagesFromStorage();
+        return images.map(img => img.dataUrl);
+      }
+      
+      // Make functions globally accessible
+      window.removeReferenceImage = removeReferenceImage;
+      window.getReferenceImagesForGeneration = getReferenceImagesForGeneration;
+      
+              // Reference images will be initialized by the main DOMContentLoaded listener below
     </script>
   </body>
 </html> 
