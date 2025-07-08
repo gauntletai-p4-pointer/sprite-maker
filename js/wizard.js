@@ -402,7 +402,7 @@ function updateStepperCircles(currentStep) {
       stepEl.classList.add('active');
     } else {
       // Inactive steps
-      circle.classList.add('bg-gray-800', 'text-gray-400');
+      circle.classList.add('', 'text-gray-400');
       label.classList.add('text-gray-400');
       stepEl.classList.remove('active');
     }
@@ -737,7 +737,7 @@ function initStyleCards() {
       const imagePath = getImagePath(style);
       
       // Create very simple style cards for the new compact interface
-      return `<div class="style-option style-card relative cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all p-2 bg-gray-800/50 rounded-lg" data-style-id="${style.id}" data-style-name="${style.name}" data-style-description="${style.description || ''}">
+      return `<div class="style-option style-card relative cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all p-2 /50 rounded-lg" data-style-id="${style.id}" data-style-name="${style.name}" data-style-description="${style.description || ''}">
         <div class="flex flex-col">
           <div class="w-full aspect-square bg-gray-900/80 rounded mb-2 flex items-center justify-center overflow-hidden">
             <img src="${imagePath}" 
@@ -848,10 +848,10 @@ async function generateSingleStyle(styleId) {
   const state = getState();
   
   // Check if we already have the API dependencies
-  if (typeof callOpenAIGenerate !== 'function') {
+  if (typeof callOpenAIEdit !== 'function') {
     // Import the API module if not already available
     const apiModule = await import('./api.js');
-    window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
+    window.callOpenAIEdit = apiModule.callOpenAIEdit;
     window.generateSpritePrompt = (await import('./prompts.js')).generateSpritePrompt;
     window.makeStylePreview = (await import('./prompts.js')).makeStylePreview;
   }
@@ -901,8 +901,8 @@ async function generateSingleStyle(styleId) {
     
     console.log(`Generated prompt for ${styleId}:`, prompt);
     
-    // Call the OpenAI API (DALL-E 3 doesn't use input images)
-    const result = await window.callOpenAIGenerate(prompt, state.apiKey);
+    // Call the OpenAI API (GPT-image-1 requires input image)
+    const result = await window.callOpenAIEdit(prompt, state.uploadedImage, state.apiKey);
     
     // Store the result
     const generatedStyles = [...(state.generatedStyles || [])];
@@ -1448,7 +1448,7 @@ async function generateSelectedAction() {
     if (typeof window.generateSpriteAction !== 'function') {
       const apiModule = await import('./api.js');
       window.generateSpriteAction = apiModule.generateSpriteAction;
-      window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
+      window.callOpenAIEdit = apiModule.callOpenAIEdit;
       window.dataURLtoFile = apiModule.dataURLtoFile;
     }
     
@@ -1598,9 +1598,10 @@ async function generateSelectedAction() {
         
         console.log(`Generating frame ${i+1}/${frameCount} using ${i === 0 ? 'initial styled image' : 'previous frame'} as input`);
         
-        // Generate this frame using the OpenAI API directly (DALL-E 3)
-        const result = await window.callOpenAIGenerate(
+        // Generate this frame using the OpenAI API directly (GPT-Image-1)
+        const result = await window.callOpenAIEdit(
           enhancedPrompt,
+          currentInput,
           state.apiKey
         ).catch(error => {
           console.error(`API call error for frame ${i+1}:`, error);
@@ -1841,7 +1842,7 @@ function displayActionFrames(actionId) {
         <h4 class="text-lg font-medium mb-2">${actionInfo.name} Frames</h4>
         <p class="text-sm text-gray-400">${actionInfo.basePrompt}</p>
         <div class="flex items-center gap-3 mt-3">
-          <span class="text-xs px-2 py-1 bg-gray-800 rounded">
+          <span class="text-xs px-2 py-1  rounded">
             ${successFrames}/${totalFrames} frames generated
           </span>
           ${errorFrames > 0 ? 
@@ -1858,7 +1859,7 @@ function displayActionFrames(actionId) {
         </div>
         
         ${inProgress ? 
-          `<div class="w-full bg-gray-800 rounded-full h-2.5 mt-3">
+          `<div class="w-full  rounded-full h-2.5 mt-3">
             <div class="bg-primary h-2.5 rounded-full" style="width: ${Math.round((successFrames / totalFrames) * 100)}%"></div>
           </div>` : 
           ''}
@@ -1872,11 +1873,11 @@ function displayActionFrames(actionId) {
             // Regular successful frame
             return `
               <div class="frame-container relative bg-gray-900/50 p-2 rounded-lg border border-gray-800 hover:border-primary/50 transition-colors">
-                <span class="absolute top-2 left-2 bg-gray-800/80 text-xs text-gray-300 px-2 py-1 rounded">
+                <span class="absolute top-2 left-2 /80 text-xs text-gray-300 px-2 py-1 rounded">
                   Frame ${index + 1}/${totalFrames}
                 </span>
                 <button 
-                  class="absolute top-2 right-2 bg-gray-800/80 hover:bg-primary/70 text-gray-300 hover:text-white p-2 rounded-lg transition-colors"
+                  class="absolute top-2 right-2 /80 hover:bg-primary/70 text-gray-300 hover:text-white p-2 rounded-lg transition-colors"
                   onclick="showFrameEditModal('${actionId}', ${index})"
                   title="Edit this frame"
                 >
@@ -1912,7 +1913,7 @@ function displayActionFrames(actionId) {
                   Frame ${index + 1}/${totalFrames} - Error
                 </span>
                 <button 
-                  class="absolute top-2 right-2 bg-gray-800/80 hover:bg-primary/70 text-gray-300 hover:text-white p-2 rounded-lg transition-colors"
+                  class="absolute top-2 right-2 /80 hover:bg-primary/70 text-gray-300 hover:text-white p-2 rounded-lg transition-colors"
                   onclick="showFrameEditModal('${actionId}', ${index})"
                   title="Try again"
                 >
@@ -1952,7 +1953,7 @@ function displayActionFrames(actionId) {
                   <span class="mr-1">Frame ${index + 1}/${totalFrames}</span>
                   <span class="inline-block w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                 </span>
-                <div class="w-full aspect-square flex items-center justify-center bg-gray-800/50 rounded">
+                <div class="w-full aspect-square flex items-center justify-center /50 rounded">
                   <img src="media/loading.svg" alt="Loading..." class="w-12 h-12">
                 </div>
                 <div class="mt-2 text-xs text-gray-500 px-1">
@@ -1964,10 +1965,10 @@ function displayActionFrames(actionId) {
             // Not yet generated frame
             return `
               <div class="frame-container relative bg-gray-900/50 p-2 rounded-lg border border-gray-800">
-                <span class="absolute top-2 left-2 bg-gray-800/80 text-xs text-gray-300 px-2 py-1 rounded">
+                <span class="absolute top-2 left-2 /80 text-xs text-gray-300 px-2 py-1 rounded">
                   Frame ${index + 1}/${totalFrames}
                 </span>
-                <div class="w-full aspect-square flex items-center justify-center bg-gray-800/50 rounded">
+                <div class="w-full aspect-square flex items-center justify-center /50 rounded">
                   <div class="text-xs text-gray-500">Waiting...</div>
                 </div>
                 <div class="mt-2 text-xs text-gray-500 px-1">
@@ -2176,7 +2177,7 @@ editModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center ju
 editModal.id = 'frameEditModal';
 
 const editContent = document.createElement('div');
-editContent.className = 'relative bg-gray-800 p-8 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-auto text-gray-100';
+editContent.className = 'relative  p-8 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-auto text-gray-100';
 editModal.appendChild(editContent);
 
 // Append edit modal to body
@@ -2386,9 +2387,9 @@ async function regenerateFrame(actionId, frameIndex) {
     closeFrameEditModal();
     
     // Make sure we have the API functions
-    if (typeof window.callOpenAIGenerate !== 'function') {
+    if (typeof window.callOpenAIEdit !== 'function') {
       const apiModule = await import('./api.js');
-      window.callOpenAIGenerate = apiModule.callOpenAIGenerate;
+      window.callOpenAIEdit = apiModule.callOpenAIEdit;
     }
     
     // Find the appropriate input image for this frame regeneration
@@ -2475,9 +2476,10 @@ async function regenerateFrame(actionId, frameIndex) {
       inputImage = state.uploadedImage;
     }
     
-    // Generate new frame (DALL-E 3)
-    const result = await window.callOpenAIGenerate(
+    // Generate new frame (GPT-Image-1)
+    const result = await window.callOpenAIEdit(
       customPrompt,
+      inputImage,
       state.apiKey
     ).catch(error => {
       console.error(`API call error when regenerating frame ${frameIndex}:`, error);
@@ -2669,7 +2671,7 @@ async function initializeActionSelection() {
             actionDescription.innerHTML = `
               <p class="mb-1">${description}</p>
               <div class="flex items-center mt-2">
-                <span class="bg-gray-800 text-xs text-gray-300 px-2 py-1 rounded mr-2">
+                <span class=" text-xs text-gray-300 px-2 py-1 rounded mr-2">
                   ${frames} frames
                 </span>
               </div>

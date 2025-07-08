@@ -2,39 +2,41 @@ import { getState } from './state.js';
 import { generateSpritePrompt, SPRITE_SYSTEM_PRIMER, STYLE_PROMPTS } from './prompts.js';
 
 /**
- * Calls OpenAI DALL-E 3 endpoint and returns a data URL.
- * Generates images from text prompts only (no input image required).
+ * Calls OpenAI GPT-Image-1 endpoint and returns a data URL.
+ * Edits images based on prompts and optional input images.
  */
-export async function callOpenAIGenerate(prompt, apiKey) {
+export async function callOpenAIEdit(prompt, inputImage, apiKey) {
   const state = getState();
   
   // Use provided API key or fallback to the one in state
   const key = apiKey || state.apiKey;
   
-  console.log('Calling DALL-E 3 API with:', {
+  console.log('Calling GPT-Image-1 API with:', {
     promptLength: prompt.length,
+    hasInputImage: !!inputImage,
     hasApiKey: !!key
   });
 
   try {
-    const requestBody = {
-      model: 'dall-e-3',
-      prompt: prompt,
-      n: 1,
-      size: '1024x1024',
-      quality: 'standard',
-      response_format: 'b64_json'
-    };
+    const formData = new FormData();
+    formData.append('model', 'gpt-image-1');
+    formData.append('prompt', prompt);
+    formData.append('n', '1');
+    formData.append('size', '1024x1024');
+    formData.append('response_format', 'b64_json');
+    
+    if (inputImage) {
+      formData.append('image', inputImage);
+    }
 
-    console.log('Request body prepared:', requestBody);
+    console.log('FormData prepared for GPT-Image-1');
 
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
+    const response = await fetch('https://api.openai.com/v1/images/edits', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         'Authorization': `Bearer ${key}`
       },
-      body: JSON.stringify(requestBody)
+      body: formData
     });
 
     // More detailed error handling
@@ -105,9 +107,10 @@ export async function generateSpriteStyles(imageFile, characterDescription = '')
       throw new Error('Please enter your OpenAI API key');
     }
 
-    // Since DALL-E 3 doesn't use input images, we need to create a character description
-    // For now, we'll use a generic description if none is provided
-    const charDesc = characterDescription || 'A character for a video game sprite';
+    // GPT-Image-1 uses input images, so we need the uploaded image file
+    if (!imageFile) {
+      throw new Error('Please upload an image to generate styles');
+    }
     
     // Generate a unique reference token for this character
     const referenceToken = `CHAR_${Date.now().toString(36)}`;
@@ -116,11 +119,11 @@ export async function generateSpriteStyles(imageFile, characterDescription = '')
     const stylePromises = STYLE_PROMPTS.map(async (style) => {
       try {
         // Generate the prompt for this style with character description
-        const prompt = generateSpritePrompt(style.id, 'idle', referenceToken, charDesc);
+        const prompt = generateSpritePrompt(style.id, 'idle', referenceToken, characterDescription);
         console.log(`Generating style ${style.id} with prompt length ${prompt.length}`);
         
-        // Call the OpenAI API
-        const result = await callOpenAIGenerate(prompt, apiKey);
+        // Call the OpenAI API with the input image
+        const result = await callOpenAIEdit(prompt, imageFile, apiKey);
         console.log(`Style ${style.id} generation complete`);
         
         return {
@@ -182,8 +185,27 @@ export async function generateSpriteAction(styleId, actionId, frameIndex = 0, is
       existingFrames: state.generatedFrames?.[actionId]?.length || 0
     });
     
-    // Since DALL-E 3 doesn't use input images, we work with text descriptions
-    const charDesc = characterDescription || 'A character for a video game sprite';
+    // GPT-Image-1 uses input images, so we need to get the base image
+    // Try to get the uploaded image or a generated style image
+    let inputImage = null;
+    if (state.uploadedImage) {
+      // Convert data URL to file if needed
+      if (typeof state.uploadedImage === 'string' && state.uploadedImage.startsWith('data:')) {
+        inputImage = await dataURLtoFile(state.uploadedImage, 'input.png');
+      } else {
+        inputImage = state.uploadedImage;
+      }
+    } else if (state.generatedStyles && state.generatedStyles.length > 0) {
+      // Find the style that matches the styleId
+      const matchingStyle = state.generatedStyles.find(s => s.id === styleId);
+      if (matchingStyle && matchingStyle.imageUrl) {
+        inputImage = await dataURLtoFile(matchingStyle.imageUrl, 'style.png');
+      }
+    }
+    
+    if (!inputImage) {
+      throw new Error('No input image available for sprite generation');
+    }
     
     // Generate a unique reference token for this character
     const referenceToken = `CHAR_${Date.now().toString(36)}`;
@@ -193,19 +215,20 @@ export async function generateSpriteAction(styleId, actionId, frameIndex = 0, is
       styleId, 
       actionId, 
       referenceToken, 
-      charDesc, 
+      characterDescription, 
       frameIndex, 
       isContinuation
     );
     
     console.log(`Generating ${actionId} frame ${frameIndex+1} in ${styleId} style:`, {
-      characterDescription: charDesc,
+      characterDescription: characterDescription,
       isContinuation: isContinuation,
       isSequential: frameIndex > 0,
-      promptLength: prompt.length
+      promptLength: prompt.length,
+      hasInputImage: !!inputImage
     });
     
-    const result = await callOpenAIGenerate(prompt, apiKey);
+    const result = await callOpenAIEdit(prompt, inputImage, apiKey);
 
     return {
       id: actionId,

@@ -1,4 +1,4 @@
-import { generateSpriteStyles, generateSpriteAction, callOpenAIGenerate } from './api.js';
+import { generateSpriteStyles, generateSpriteAction, callOpenAIEdit } from './api.js';
 import { getState, updateState, updateUIState } from './state.js';
 import { STYLE_PROMPTS, ACTION_PROMPTS, generateSpritePrompt } from './prompts.js';
 import { CostCalculator } from './costCalculator.js';
@@ -29,7 +29,7 @@ const downloadAllBtn = document.getElementById('downloadAllBtn');
 
 // Create usage counter element
 const usageCounter = document.createElement('div');
-usageCounter.className = 'fixed top-4 right-4 bg-gray-800 rounded-lg p-3 shadow-lg border border-gray-700 z-50';
+usageCounter.className = 'fixed top-4 right-4  rounded-lg p-3 shadow-lg border border-gray-700 z-50';
 usageCounter.innerHTML = `
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-2">
@@ -311,7 +311,7 @@ editModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center ju
 editModal.id = 'frameEditModal';
 
 const editContent = document.createElement('div');
-editContent.className = 'relative bg-gray-800 p-8 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-auto text-gray-100';
+editContent.className = 'relative  p-8 rounded-lg w-full max-w-2xl max-h-[90vh] overflow-auto text-gray-100';
 editModal.appendChild(editContent);
 
 // Append edit modal to body at the top level to avoid z-index issues
@@ -344,7 +344,7 @@ function updateActionFramesDisplay(frames = []) {
                 <div class="sprite-container" style="width: ${STANDARD_IMAGE_WIDTH}px; height: ${STANDARD_IMAGE_HEIGHT}px; margin: 0 auto;">
                   <img src="${frame.imageUrl}" 
                        alt="Frame ${i + 1}/${frameCount}" 
-                       class="w-full h-full object-contain rounded-lg bg-gray-800 cursor-zoom-in hover:opacity-90 transition-opacity" 
+                       class="w-full h-full object-contain rounded-lg  cursor-zoom-in hover:opacity-90 transition-opacity" 
                        onclick="showImageModal('${frame.imageUrl}')" />
                 </div>
               </div>
@@ -582,8 +582,9 @@ async function regenerateFrame(actionId, frameIndex) {
     }
 
     // Generate new frame
-    const result = await callOpenAIGenerate(
+    const result = await callOpenAIEdit(
       customPrompt,
+      inputImage,
       state.apiKey
     );
 

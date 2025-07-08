@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-900 scroll-smooth">
+<html lang="en" class="h-full scroll-smooth" style="background-color: var(--background-color);">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SpriteForge - Generate Game Sprites with AI</title>
-    <meta name="description" content="Transform photos into game-ready character sprites using OpenAI's DALL-E 3 model">
+    <title>Pointer - Generate Game Sprites with AI</title>
+    <meta name="description" content="Transform photos into game-ready character sprites using OpenAI's GPT-Image-1 model">
     <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png">
@@ -12,8 +12,8 @@
     <link rel="manifest" href="./site.webmanifest">
     <link rel="shortcut icon" href="./favicon.ico" type="image/x-icon">
     <!-- Open Graph / Social Media Metadata -->
-    <meta property="og:title" content="SpriteForge - Generate Game Sprites with AI">
-    <meta property="og:description" content="Transform photos into game-ready character sprites using OpenAI's DALL-E 3 model">
+    <meta property="og:title" content="Pointer - Generate Game Sprites with AI">
+    <meta property="og:description" content="Transform photos into game-ready character sprites using OpenAI's GPT-Image-1 model">
     <meta property="og:image" content="https://marcelontime.github.io/spriteforge/media/spriteforge.png">
     <meta property="og:url" content="https://marcelontime.github.io/spriteforge">
     <meta property="og:type" content="website">
@@ -21,9 +21,9 @@
     <!-- WhatsApp specific -->
     <meta property="og:image:width" content="1024">
     <meta property="og:image:height" content="1024">
-    <meta property="og:image:alt" content="SpriteForge - Generate Game Sprites with AI">
+    <meta property="og:image:alt" content="Pointer - Generate Game Sprites with AI">
     <meta property="og:image:type" content="image/png">
-    <meta property="og:site_name" content="SpriteForge">
+    <meta property="og:site_name" content="Pointer">
     <meta name="thumbnail" content="https://marcelontime.github.io/spriteforge/media/spriteforge.png">
     <meta itemprop="image" content="https://marcelontime.github.io/spriteforge/media/spriteforge.png">
     <!-- Stylesheets -->
@@ -39,7 +39,8 @@
     </script>
     <style>
       body {
-        background: linear-gradient(to bottom, #111827, #0f172a);
+        background: #ffffff;
+        color: #1f2937;
       }
       
       .step-circle {
@@ -49,25 +50,25 @@
         align-items: center;
         justify-content: center;
         border-radius: 50%;
-        background-color: #1e293b;
-        color: #9ca3af;
+        color: var(--text-muted);
+        border: 1px solid var(--border-color);
         transition: all 0.3s ease;
       }
       
       .step-circle.active {
-        background-color: var(--primary-color);
-        color: #111827;
+        color: white;
+        border-color: var(--primary-color);
       }
       
       .step-circle.completed {
-        background-color: rgba(var(--primary-rgb), 0.2);
         color: var(--primary-color);
+        border-color: var(--primary-color);
       }
       
       .step-line {
         flex-grow: 1;
         height: 2px;
-        background-color: #1e293b;
+        background-color: var(--border-color);
         margin: 0 8px;
       }
       
@@ -76,9 +77,9 @@
       }
       
       .style-card {
-        border: 2px solid rgba(255, 166, 41, 0.3);
+        border: 1px solid var(--border-color);
         transition: all 0.2s ease;
-        background-color: #1e293b;
+        background-color: var(--background-color);
         overflow: hidden;
         border-radius: 0.5rem;
         padding: 1rem;
@@ -86,14 +87,14 @@
       }
       
       .style-card:hover {
-        border-color: rgba(255, 166, 41, 0.8);
-        transform: translateY(-4px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       }
       
       .style-card.selected, .style-option.selected {
-        border-color: #FFA629;
-        box-shadow: 0 0 0 2px #FFA629;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.2);
       }
       
       /* Simple Step Panel Visibility Control */
@@ -143,18 +144,25 @@
       }
       
       :root {
-        --primary-color: #FFA629;
-        --primary-rgb: 255, 166, 41;
-        --secondary-color: #8E44FD;
-        --secondary-rgb: 142, 68, 253;
+        --primary-color: #007acc;
+        --primary-rgb: 0, 122, 204;
+        --secondary-color: #6c757d;
+        --secondary-rgb: 108, 117, 125;
+        --background-color: #ffffff;
+        --surface-color: #f8f9fa;
+        --border-color: #e9ecef;
+        --text-primary: #1f2937;
+        --text-secondary: #6b7280;
+        --text-muted: #9ca3af;
       }
       
       /* Button Styles */
       .btn-primary {
         background-color: var(--primary-color);
-        color: #111827;
+        color: white;
         font-weight: 500;
-        border-radius: 0.375rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--primary-color);
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
@@ -162,21 +170,24 @@
       }
       
       .btn-primary:hover {
-        background-color: #e69423;
+        background-color: #0066a3;
+        border-color: #0066a3;
         transform: translateY(-1px);
       }
       
       .btn-primary:disabled {
-        background-color: #6b7280;
+        background-color: var(--text-muted);
+        border-color: var(--text-muted);
         cursor: not-allowed;
         transform: none;
       }
       
       .btn-secondary {
-        background-color: rgba(var(--secondary-rgb), 0.15);
-        color: var(--secondary-color);
+        background-color: var(--surface-color);
+        color: var(--text-primary);
         font-weight: 500;
-        border-radius: 0.375rem;
+        border-radius: 0.25rem;
+        border: 1px solid var(--border-color);
         transition: all 0.2s;
         display: inline-flex;
         align-items: center;
@@ -184,16 +195,17 @@
       }
       
       .btn-secondary:hover {
-        background-color: rgba(var(--secondary-rgb), 0.25);
+        background-color: #e2e8f0;
+        border-color: var(--secondary-color);
       }
       
       .form-input {
         width: 100%;
         padding: 0.5rem 0.75rem;
-        background-color: #1e293b;
-        border: 1px solid #374151;
-        border-radius: 0.375rem;
-        color: #e5e7eb;
+        background-color: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 0.25rem;
+        color: var(--text-primary);
         font-size: 0.875rem;
         transition: border-color 0.2s;
       }
@@ -201,7 +213,7 @@
       .form-input:focus {
         outline: none;
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.25);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
       }
       
       .form-label {
@@ -209,7 +221,7 @@
         font-size: 0.875rem;
         font-weight: 500;
         margin-bottom: 0.5rem;
-        color: #9ca3af;
+        color: var(--text-primary);
       }
       
       /* Style Grid */
@@ -223,9 +235,10 @@
       
       /* Selection Summary Styles */
       .selection-summary {
-        background: linear-gradient(to right, rgba(15, 23, 42, 0.8), rgba(30, 41, 59, 0.8));
+        background: var(--surface-color);
+        border: 1px solid var(--border-color);
         border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         transition: all 0.3s ease;
       }
       
@@ -235,16 +248,16 @@
       }
       
       .selection-summary-item:hover {
-        transform: translateY(-2px);
+        transform: translateY(-1px);
       }
       
       .selection-summary-image {
         width: 100px;
         height: 100px;
-        border-radius: 0.375rem;
+        border-radius: 0.25rem;
         overflow: hidden;
-        background-color: rgba(17, 24, 39, 0.7);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        background-color: var(--background-color);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: all 0.3s ease;
         border: 2px solid transparent;
       }
@@ -262,9 +275,238 @@
       .selection-summary-image.selected {
         border-color: rgba(var(--secondary-rgb), 0.5);
       }
+
+      /* Chat Sidebar Styles */
+      .chat-sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 400px;
+        background: var(--surface-color);
+        border-left: 1px solid var(--border-color);
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-sidebar.open {
+        transform: translateX(0);
+      }
+
+      .chat-toggle {
+        position: fixed;
+        top: 20px;
+        right: 420px;
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 20px;
+        font-weight: bold;
+        z-index: 1001;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .chat-toggle:hover {
+        background: #0066a3;
+        transform: scale(1.05);
+      }
+
+      .chat-sidebar:not(.open) + .chat-toggle {
+        right: 20px;
+      }
+
+      .chat-header {
+        padding: 1rem;
+        border-bottom: 1px solid var(--border-color);
+        background: var(--background-color);
+      }
+
+      .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .chat-message {
+        max-width: 80%;
+        word-wrap: break-word;
+      }
+
+      .chat-message.user {
+        align-self: flex-end;
+        background: var(--primary-color);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 1rem 1rem 0.25rem 1rem;
+        font-weight: 500;
+      }
+
+      .chat-message.ai {
+        align-self: flex-start;
+        background: var(--background-color);
+        color: var(--text-primary);
+        padding: 0.75rem 1rem;
+        border-radius: 1rem 1rem 1rem 0.25rem;
+        border: 1px solid var(--border-color);
+      }
+
+      .chat-input-container {
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        background: var(--background-color);
+      }
+
+      .chat-input-wrapper {
+        display: flex;
+        gap: 0.5rem;
+        align-items: flex-end;
+      }
+
+      .chat-input {
+        flex: 1;
+        background: var(--background-color);
+        border: 1px solid var(--border-color);
+        border-radius: 1rem;
+        padding: 0.75rem 1rem;
+        color: var(--text-primary);
+        resize: none;
+        min-height: 40px;
+        max-height: 120px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .chat-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.1);
+      }
+
+      .chat-send-btn {
+        background: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: bold;
+      }
+
+      .chat-send-btn:hover:not(:disabled) {
+        background: #0066a3;
+        transform: scale(1.05);
+      }
+
+      .chat-send-btn:disabled {
+        background: var(--text-muted);
+        cursor: not-allowed;
+      }
+
+      .typing-indicator {
+        align-self: flex-start;
+        background: var(--surface-color);
+        color: var(--text-secondary);
+        padding: 0.75rem 1rem;
+        border-radius: 1rem 1rem 1rem 0.25rem;
+        border: 1px solid var(--border-color);
+        font-style: italic;
+        display: none;
+      }
+
+      .typing-indicator.show {
+        display: block;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 640px) {
+        .chat-sidebar {
+          width: 100vw;
+        }
+        
+        .chat-sidebar.open + .chat-toggle {
+          right: 20px;
+        }
+      }
+
+      /* Ensure main content doesn't get covered */
+      body.chat-open {
+        margin-right: 0;
+      }
+
+      @media (min-width: 1024px) {
+        body.chat-open .container {
+          margin-right: 420px;
+          transition: margin-right 0.3s ease-in-out;
+        }
+      }
+
+      @media (min-width: 768px) and (max-width: 1023px) {
+        body.chat-open .container {
+          margin-right: 420px;
+          transition: margin-right 0.3s ease-in-out;
+        }
+      }
+
+      /* Navigation Header Styles */
+      .navbar {
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        background-color: var(--background-color);
+        border-bottom: 1px solid var(--border-color);
+        backdrop-filter: blur(8px);
+      }
+
+      .navbar-brand {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .navbar-brand:hover {
+        color: var(--primary-color);
+        transform: translateY(-1px);
+      }
+
+      .navbar-brand::before {
+        content: "●";
+        color: var(--primary-color);
+        font-size: 1.25rem;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
     </style>
   </head>
-  <body class="h-full text-gray-100 antialiased">
+  <body class="h-full antialiased chat-open" style="color: var(--text-primary);">
     <!-- Simple helper functions -->
     <script>
       // Show image in modal
@@ -287,12 +529,21 @@
       });
     </script>
     
-    <div class="container mx-auto px-4 py-8 max-w-5xl">
+    <!-- Navigation Header -->
+    <nav class="navbar">
+      <div class="container mx-auto px-4 py-3 flex items-center justify-between max-w-5xl">
+        <a href="#" class="navbar-brand" onclick="window.location.reload()">
+          Pointer
+        </a>
+      </div>
+    </nav>
+
+    <div class="container mx-auto px-4 py-8 max-w-5xl" style="background-color: var(--background-color);">
       <!-- Main header -->
-      <header class="text-center mb-12 pt-8">
-        <h1 class="text-4xl sm:text-6xl font-extrabold mb-6 text-white">
+      <header class="text-center mb-12 pt-4">
+        <h1 class="text-4xl sm:text-6xl font-extrabold mb-6" style="color: var(--text-primary);">
           Turn any picture into<br />
-          <span class="text-primary">game-ready sprites</span>
+          <span style="color: var(--primary-color);">game-ready sprites</span>
         </h1>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
           <!-- Buttons removed -->
@@ -302,15 +553,15 @@
       <!-- Step indicator - progression tracker -->
       <div class="flex items-center justify-center mb-12 max-w-sm mx-auto" id="stepper">
         <div class="step flex items-center" data-step="1">
-          <div class="step-circle active flex items-center justify-center w-8 h-8 rounded-full bg-primary text-gray-900 text-sm font-medium">1</div>
-          <div class="ml-2 mr-auto text-sm font-medium text-primary">Upload</div>
+          <div class="step-circle active flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium">1</div>
+          <div class="ml-2 mr-auto text-sm font-medium" style="color: var(--primary-color);">Upload</div>
         </div>
         
-        <div class="h-0.5 w-20 bg-gray-800 mx-3 step-line"></div>
+        <div class="h-0.5 w-20 mx-3 step-line"></div>
         
         <div class="step flex items-center" data-step="2">
-          <div class="step-circle flex items-center justify-center w-8 h-8 rounded-full bg-gray-800 text-gray-400 text-sm font-medium">2</div>
-          <div class="ml-2 text-sm font-medium text-gray-400">Actions</div>
+          <div class="step-circle flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium">2</div>
+          <div class="ml-2 text-sm font-medium" style="color: var(--text-muted);">Actions</div>
         </div>
       </div>
       
@@ -326,12 +577,12 @@
           <!-- Upload and Preview Section -->
           <div class="flex flex-col md:flex-row gap-6 mb-6">
             <!-- Left side - Upload area -->
-            <div class="w-full md:w-1/2 border-2 border-dashed border-gray-700 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
+            <div class="w-full md:w-1/2 border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]" style="border-color: var(--border-color);">
               <div class="text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 text-gray-600 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-4 mx-auto" style="color: var(--text-muted);" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
-                <p class="text-gray-400 mb-4">Drag & drop an image,</p>
+                <p class="mb-4" style="color: var(--text-secondary);">Drag & drop an image,</p>
                 <button id="chooseFileBtn" type="button" class="btn-secondary px-6 py-2">Choose file</button>
                 <input type="file" id="imageUpload" class="hidden" accept="image/*" capture="false" />
               </div>
@@ -342,11 +593,11 @@
             </div>
             
             <!-- Right side - Selected style preview -->
-            <div class="w-full md:w-1/2 bg-gray-800/30 border border-gray-700 rounded-lg p-4 flex flex-col items-center justify-center">
+            <div class="w-full md:w-1/2 rounded-lg p-4 flex flex-col items-center justify-center" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
               <div id="selectedStyleContainer" class="text-center">
                 <img id="selectedStyleImage" class="max-h-48 mx-auto mb-4" alt="Selected style" src="media/style_previews/hollow_knight.png" />
-                <h3 id="selectedStyleName" class="text-lg font-semibold mb-1">Hollow Knight</h3>
-                <p class="text-gray-400 text-sm">128×128 hand-drawn gothic style</p>
+                <h3 id="selectedStyleName" class="text-lg font-semibold mb-1" style="color: var(--text-primary);">Hollow Knight</h3>
+                <p class="text-sm" style="color: var(--text-secondary);">128×128 hand-drawn gothic style</p>
               </div>
             </div>
           </div>
@@ -383,16 +634,16 @@
           <!-- Selected Style Preview and Image -->
           <div class="flex flex-col md:flex-row gap-6 mb-6">
             <!-- Left side - Styled Image Preview -->
-            <div class="w-full md:w-1/2 bg-gray-800/30 border border-gray-700 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]">
-              <h3 class="text-lg font-semibold mb-4">Generated Style</h3>
+            <div class="w-full md:w-1/2 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
+              <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Generated Style</h3>
               <div id="styledImageContainer" class="w-full flex items-center justify-center">
                 <img id="styledImagePreview" class="max-h-48 max-w-full rounded shadow cursor-zoom-in object-contain" alt="Styled Preview" onclick="showImageModal(this.src)" />
               </div>
             </div>
             
             <!-- Right side - Action Selection -->
-            <div class="w-full md:w-1/2 bg-gray-800/30 border border-gray-700 rounded-lg p-4 flex flex-col">
-              <h3 class="text-lg font-semibold mb-4">Choose Action</h3>
+            <div class="w-full md:w-1/2 rounded-lg p-4 flex flex-col" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
+              <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Choose Action</h3>
               
               <!-- Action selection dropdown -->
               <div class="mb-4">
@@ -404,7 +655,7 @@
               </div>
               
               <!-- Action description will be shown here -->
-              <div id="actionDescription" class="text-sm text-gray-400 mb-4">
+              <div id="actionDescription" class="text-sm mb-4" style="color: var(--text-secondary);">
                 Select an action to see its description and frame count.
               </div>
               
@@ -416,11 +667,11 @@
           </div>
           
           <!-- Animation Preview Section - Simplified -->
-          <div class="bg-gray-800/30 border border-gray-700 rounded-lg p-6 mb-8">
-            <h3 class="text-xl font-semibold mb-4">Action Preview</h3>
+          <div class="rounded-lg p-6 mb-8" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
+            <h3 class="text-xl font-semibold mb-4" style="color: var(--text-primary);">Action Preview</h3>
             
             <!-- Preview Area -->
-            <div id="actionPreview" class="flex justify-center items-center min-h-[200px] bg-gray-900/50 rounded-lg mb-4 hidden">
+            <div id="actionPreview" class="flex justify-center items-center min-h-[200px] rounded-lg mb-4 hidden" style="background-color: var(--background-color);">
               <!-- Preview content will be inserted here -->
             </div>
             
@@ -433,19 +684,60 @@
       </main>
       
       <!-- Footer -->
-      <footer class="text-center text-sm text-gray-500 mt-16 pb-8">
-        Built with ❤️ &nbsp;·&nbsp; <a href="https://github.com/marcelontime/spriteforge" class="underline hover:text-gray-300">GitHub</a>
+      <footer class="text-center text-sm mt-16 pb-8" style="color: var(--text-muted);">
+        Built by the team &nbsp;·&nbsp; <a href="https://github.com/marcelontime/spriteforge" class="underline hover:opacity-70" style="color: var(--text-muted);">GitHub</a>
       </footer>
     </div>
     
     <!-- Modal for image preview -->
-    <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 flex items-center justify-center hidden">
+    <div id="imageModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background-color: rgba(0, 0, 0, 0.75);">
       <div class="relative bg-transparent max-w-3xl p-4">
         <img id="modalImage" class="max-w-full max-h-[80vh]" alt="Preview" />
-        <button id="closeModal" class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-800/50 text-white hover:bg-gray-700">×</button>
+        <button id="closeModal" class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full hover:opacity-70" style="background-color: rgba(0, 0, 0, 0.5); color: white;">×</button>
       </div>
     </div>
     
+    <!-- Chat Sidebar -->
+    <div id="chatSidebar" class="chat-sidebar open">
+      <div class="chat-header">
+        <h3 class="text-lg font-semibold" style="color: var(--text-primary);">AI Assistant</h3>
+        <p class="text-sm" style="color: var(--text-secondary);">Ask me anything about sprite generation!</p>
+      </div>
+      
+      <div id="chatMessages" class="chat-messages">
+        <div class="chat-message ai">
+          <div>Welcome to Pointer! I'm here to help you create amazing game sprites. How can I assist you today?</div>
+        </div>
+      </div>
+      
+      <div class="typing-indicator" id="typingIndicator">
+        AI is typing...
+      </div>
+      
+      <div class="chat-input-container">
+        <div class="chat-input-wrapper">
+          <textarea 
+            id="chatInput" 
+            class="chat-input" 
+            placeholder="Type your message..."
+            rows="1"
+          ></textarea>
+          <button id="chatSendBtn" class="chat-send-btn" title="Send message">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Chat Toggle Button -->
+    <button id="chatToggle" class="chat-toggle" title="Toggle AI Assistant">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+      </svg>
+    </button>
+
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script type="module" src="js/state.js"></script>
@@ -488,7 +780,161 @@
             imageUpload.click();
           });
         }
+        
+        // Chat functionality
+        initializeChat();
       });
+      
+      // Chat functionality
+      function initializeChat() {
+        const chatToggle = document.getElementById('chatToggle');
+        const chatSidebar = document.getElementById('chatSidebar');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const typingIndicator = document.getElementById('typingIndicator');
+        
+        // Load chat history from localStorage
+        loadChatHistory();
+        
+        // Toggle chat sidebar
+        chatToggle.addEventListener('click', function() {
+          const isOpen = chatSidebar.classList.contains('open');
+          if (isOpen) {
+            chatSidebar.classList.remove('open');
+            document.body.classList.remove('chat-open');
+          } else {
+            chatSidebar.classList.add('open');
+            document.body.classList.add('chat-open');
+            // Focus on input when opened
+            setTimeout(() => chatInput.focus(), 300);
+          }
+        });
+        
+        // Auto-resize textarea
+        chatInput.addEventListener('input', function() {
+          this.style.height = 'auto';
+          this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+          
+          // Enable/disable send button
+          chatSendBtn.disabled = !this.value.trim();
+        });
+        
+        // Send message on Enter (without Shift)
+        chatInput.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+        
+        // Send message on button click
+        chatSendBtn.addEventListener('click', sendMessage);
+        
+        function sendMessage() {
+          const message = chatInput.value.trim();
+          if (!message) return;
+          
+          // Add user message
+          addMessage(message, 'user');
+          
+          // Clear input
+          chatInput.value = '';
+          chatInput.style.height = 'auto';
+          chatSendBtn.disabled = true;
+          
+          // Show typing indicator
+          showTypingIndicator();
+          
+          // Simulate AI response (replace with actual AI integration)
+          setTimeout(() => {
+            hideTypingIndicator();
+            const aiResponse = generateAIResponse(message);
+            addMessage(aiResponse, 'ai');
+          }, 1000 + Math.random() * 2000);
+        }
+        
+        function addMessage(text, sender) {
+          const messageDiv = document.createElement('div');
+          messageDiv.className = `chat-message ${sender}`;
+          messageDiv.innerHTML = `<div>${escapeHtml(text)}</div>`;
+          
+          chatMessages.appendChild(messageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          
+          // Save to localStorage
+          saveChatHistory();
+        }
+        
+        function showTypingIndicator() {
+          typingIndicator.classList.add('show');
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function hideTypingIndicator() {
+          typingIndicator.classList.remove('show');
+        }
+        
+        function generateAIResponse(userMessage) {
+          const message = userMessage.toLowerCase();
+          
+          // Simple response logic (replace with actual AI integration)
+          if (message.includes('sprite') || message.includes('animation')) {
+            return "I can help you create sprites and animations! Pointer uses GPT-Image-1 to generate game-ready sprites. You can upload an image and choose from various styles like Hollow Knight, Stardew Valley, or Genshin Impact. What kind of sprite are you looking to create?";
+          } else if (message.includes('api') || message.includes('key')) {
+            return "You'll need an OpenAI API key to generate sprites. You can get one from OpenAI's website and enter it in the API Key field on the upload page. The key is stored locally in your browser for convenience.";
+          } else if (message.includes('style')) {
+            return "Pointer offers several art styles including Hollow Knight (gothic hand-drawn), Stardew Valley (pixel art), Genshin Impact (anime-style), and many more. Each style generates sprites optimized for different game genres.";
+          } else if (message.includes('help') || message.includes('how')) {
+            return "Here's how to use Pointer:\n1. Upload an image or photo\n2. Choose your preferred art style\n3. Enter your OpenAI API key\n4. Select an animation type (like walking, jumping, etc.)\n5. Generate your sprite sheets!\n\nWhat specific part would you like help with?";
+          } else if (message.includes('hello') || message.includes('hi')) {
+            return "Hello! I'm here to help you create amazing game sprites. Whether you need help with uploading images, choosing styles, or generating animations, I'm here to assist. What would you like to know?";
+          } else {
+            return "I'm here to help with sprite generation! You can ask me about art styles, animation types, API setup, or general questions about creating game sprites. What would you like to know?";
+          }
+        }
+        
+        function saveChatHistory() {
+          const messages = [];
+          chatMessages.querySelectorAll('.chat-message').forEach(msg => {
+            const isUser = msg.classList.contains('user');
+            const text = msg.querySelector('div').textContent;
+            messages.push({ text, sender: isUser ? 'user' : 'ai' });
+          });
+          localStorage.setItem('spriteforge_chat_history', JSON.stringify(messages));
+        }
+        
+        function loadChatHistory() {
+          const history = localStorage.getItem('spriteforge_chat_history');
+          if (history) {
+            const messages = JSON.parse(history);
+            // Clear existing messages except the welcome message
+            const welcomeMessage = chatMessages.querySelector('.chat-message.ai');
+            chatMessages.innerHTML = '';
+            if (welcomeMessage) {
+              chatMessages.appendChild(welcomeMessage);
+            }
+            
+            // Add saved messages
+            messages.forEach(msg => {
+              if (msg.text && msg.sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `chat-message ${msg.sender}`;
+                messageDiv.innerHTML = `<div>${escapeHtml(msg.text)}</div>`;
+                chatMessages.appendChild(messageDiv);
+              }
+            });
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+        }
+        
+        function escapeHtml(text) {
+          const div = document.createElement('div');
+          div.textContent = text;
+          return div.innerHTML.replace(/\n/g, '<br>');
+        }
+      }
     </script>
   </body>
 </html> 

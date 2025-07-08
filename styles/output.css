@@ -109,9 +109,9 @@ body {
 .font-medium { font-weight: 500; }
 
 /* Background utilities */
-.bg-gray-800 { background-color: #1f2937; }
+. { background-color: #1f2937; }
 .bg-gray-900 { background-color: #111827; }
-.bg-gray-800\/30 { background-color: rgba(31, 41, 59, 0.3); }
+.\/30 { background-color: rgba(31, 41, 59, 0.3); }
 .bg-gray-900\/50 { background-color: rgba(17, 24, 39, 0.5); }
 
 /* Border utilities */
@@ -249,13 +249,11 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background-color: #1e293b;
   color: #9ca3af;
   transition: all 0.3s ease;
 }
 
 .step-circle.active {
-  background-color: var(--primary-color);
   color: #111827;
 }
 
