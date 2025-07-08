@@ -2,14 +2,127 @@ import { getState } from './state.js';
 import { generateSpritePrompt, SPRITE_SYSTEM_PRIMER, STYLE_PROMPTS } from './prompts.js';
 
 /**
+ * Calls OpenAI DALL-E 3 endpoint and returns a data URL.
+ * Generates images from text prompts without requiring input images.
+ */
+export async function callDALLE3(prompt, apiKey = null) {
+  const state = getState();
+  
+  // Use provided API key or fallback to DALL-E 3 specific key
+  const key = apiKey || state.dalleApiKey;
+  
+  console.log('Calling DALL-E 3 API with:', {
+    promptLength: prompt.length,
+    hasApiKey: !!key
+  });
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
+        prompt: prompt,
+        n: 1,
+        size: '1024x1024',
+        quality: 'standard',
+        response_format: 'b64_json'
+      })
+    });
+
+    // More detailed error handling
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('DALL-E 3 API error details:', errorData);
+      throw new Error(errorData.error?.message || `API call failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Ensure we have the expected data structure
+    if (!result.data || !result.data[0] || !result.data[0].b64_json) {
+      console.error('Unexpected DALL-E 3 response format:', result);
+      throw new Error('Invalid response format from DALL-E 3 API');
+    }
+    
+    console.log('DALL-E 3 generation successful');
+    return `data:image/png;base64,${result.data[0].b64_json}`;
+  } catch (error) {
+    console.error('Error in DALL-E 3 API call:', error);
+    throw error;
+  }
+}
+
+/**
+ * Calls OpenAI Chat Completions API (GPT-4 mini) and returns text response.
+ * Used for classification and chat functionality.
+ */
+export async function callOpenAIChat(prompt, model = 'gpt-4o-mini', apiKey = null) {
+  const state = getState();
+  
+  // Use provided API key or fallback to GPT Image API key
+  const key = apiKey || state.gptImageApiKey;
+  
+  console.log('Calling OpenAI Chat API with:', {
+    model: model,
+    promptLength: prompt.length,
+    hasApiKey: !!key
+  });
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${key}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 100,
+        temperature: 0.1
+      })
+    });
+
+    // More detailed error handling
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('OpenAI Chat API error details:', errorData);
+      throw new Error(errorData.error?.message || `API call failed with status ${response.status}`);
+    }
+
+    const result = await response.json();
+    
+    // Ensure we have the expected data structure
+    if (!result.choices || !result.choices[0] || !result.choices[0].message || !result.choices[0].message.content) {
+      console.error('Unexpected Chat API response format:', result);
+      throw new Error('Invalid response format from OpenAI Chat API');
+    }
+    
+    return result.choices[0].message.content;
+  } catch (error) {
+    console.error('Error in OpenAI Chat API call:', error);
+    throw error;
+  }
+}
+
+/**
  * Calls OpenAI GPT-Image-1 endpoint and returns a data URL.
  * Edits images based on prompts and optional input images.
  */
 export async function callOpenAIEdit(prompt, inputImage, apiKey) {
   const state = getState();
   
-  // Use provided API key or fallback to the one in state
-  const key = apiKey || state.apiKey;
+  // Use provided API key or fallback to GPT Image API key
+  const key = apiKey || state.gptImageApiKey;
   
   console.log('Calling GPT-Image-1 API with:', {
     promptLength: prompt.length,

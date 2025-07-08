@@ -11,3 +11,7 @@ yarn-error.log*
 .idea/
 .vscode/
 .cursorrules
+
+# Generated config file with API keys
+js/config.js
+config.js

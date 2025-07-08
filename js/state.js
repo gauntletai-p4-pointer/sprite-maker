@@ -1,6 +1,10 @@
+import { config } from './config.js';
+
 // Global state management
 let state = {
-  apiKey: '',
+  dalleApiKey: config.DALL_E_3_API_KEY || '',
+  gptImageApiKey: config.GPT_IMAGE_1_API_KEY || '',
+  apiKey: config.GPT_IMAGE_1_API_KEY || '', // Backward compatibility
   uploadedImage: null,
   selectedStyle: null,
   selectedAction: null,
@@ -38,14 +42,21 @@ export function updateUIState() {
   }
 }
 
-// Initialize state from localStorage
+// Initialize state from config
 document.addEventListener('DOMContentLoaded', () => {
-  const apiKeyInput = document.getElementById('apiKey');
-  if (apiKeyInput) {
-    const savedApiKey = localStorage.getItem(STORAGE_KEYS.API_KEY);
-    if (savedApiKey) {
-      updateState({ apiKey: savedApiKey });
-    }
+  // Load API keys from environment config
+  if (config.DALL_E_3_API_KEY && config.GPT_IMAGE_1_API_KEY) {
+    updateState({ 
+      dalleApiKey: config.DALL_E_3_API_KEY,
+      gptImageApiKey: config.GPT_IMAGE_1_API_KEY,
+      apiKey: config.GPT_IMAGE_1_API_KEY // Backward compatibility
+    });
+    console.log('API keys loaded from environment configuration');
+  } else {
+    console.warn('Missing API keys in environment configuration:', {
+      hasDalleKey: !!config.DALL_E_3_API_KEY,
+      hasGptImageKey: !!config.GPT_IMAGE_1_API_KEY
+    });
   }
 });
 

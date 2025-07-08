@@ -4,11 +4,12 @@
   "description": "Generate game sprites using OpenAI's image generation API",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "concurrently \"npm run server\" \"npm run tailwind\"",
+    "start": "npm run build:config && node server.js",
+    "dev": "npm run build:config && concurrently \"npm run server\" \"npm run tailwind\"",
     "server": "nodemon server.js",
     "tailwind": "tailwindcss -i ./styles/input.css -o ./styles/output.css --watch",
-    "build": "tailwindcss -i ./styles/input.css -o ./styles/output.css --minify",
+    "build": "npm run build:config && tailwindcss -i ./styles/input.css -o ./styles/output.css --minify",
+    "build:config": "node build-config.js",
     "postinstall": "npm run build",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d ."

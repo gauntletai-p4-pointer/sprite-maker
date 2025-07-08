@@ -402,7 +402,7 @@ function updateStepperCircles(currentStep) {
       stepEl.classList.add('active');
     } else {
       // Inactive steps
-      circle.classList.add('', 'text-gray-400');
+      circle.classList.add('text-gray-400');
       label.classList.add('text-gray-400');
       stepEl.classList.remove('active');
     }
@@ -702,7 +702,10 @@ function goToStep(stepNumber) {
 //////////////////////////////
 function initStyleCards() {
   const stylesGrid = document.querySelector('#stylesGrid');
-  if (!stylesGrid) return console.error('Styles grid not found');
+  if (!stylesGrid) {
+    console.log('Styles grid not found - skipping style cards setup (normal for simplified UI)');
+    return;
+  }
   if (stylesGrid.children.length > 0) return; // already populated
 
   import('./prompts.js').then(module => {
@@ -1023,7 +1026,10 @@ function updateStep1Status() {
 //////////////////////////////
 function setupDropZone() {
   const dropZone = document.querySelector('.step-panel[data-step="1"] .border-dashed');
-  if (!dropZone) return console.error('Drop zone not found');
+  if (!dropZone) {
+    console.log('Drop zone not found - skipping dropzone setup (normal for simplified UI)');
+    return;
+  }
 
   const prevent = e => { e.preventDefault(); e.stopPropagation(); };
   ['dragenter','dragover','dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, prevent, false));

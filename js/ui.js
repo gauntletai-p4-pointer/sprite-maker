@@ -27,9 +27,10 @@ const actionResult = document.getElementById('actionResult');
 const apiKeyInput = document.getElementById('apiKey');
 const downloadAllBtn = document.getElementById('downloadAllBtn');
 
-// Create usage counter element
+// Create usage counter element (hidden)
 const usageCounter = document.createElement('div');
 usageCounter.className = 'fixed top-4 right-4  rounded-lg p-3 shadow-lg border border-gray-700 z-50';
+usageCounter.style.display = 'none'; // Hide the usage counter
 usageCounter.innerHTML = `
   <div class="flex items-center gap-4">
     <div class="flex items-center gap-2">
