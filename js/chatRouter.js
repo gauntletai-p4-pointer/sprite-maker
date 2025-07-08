@@ -29,21 +29,85 @@ const CLASSIFICATION_EXAMPLES = [
   { text: "Generate a knight sprite", category: "character" },
   { text: "Make a cyberpunk hacker", category: "character" },
   { text: "Design a forest elf", category: "character" },
+  { text: "I want a robot character", category: "character" },
+  { text: "Draw me a pirate", category: "character" },
   
-  // Animation examples
+  // Idle animation examples
   { text: "Make an idle animation", category: "idle" },
+  { text: "Create a breathing animation", category: "idle" },
+  { text: "Generate an idle pose", category: "idle" },
+  { text: "Make my character stand still", category: "idle" },
+  { text: "Create a resting animation", category: "idle" },
+  { text: "I want an idle cycle", category: "idle" },
+  
+  // Walk animation examples
   { text: "Create a walking cycle", category: "walk" },
+  { text: "Generate a walking animation", category: "walk" },
+  { text: "Make my character walk", category: "walk" },
+  { text: "I want a walk cycle", category: "walk" },
+  { text: "Create walking frames", category: "walk" },
+  { text: "Make a running animation", category: "walk" },
+  { text: "Generate movement animation", category: "walk" },
+  
+  // Jump animation examples
   { text: "Generate a jump animation", category: "jump" },
+  { text: "Make my character jump", category: "jump" },
+  { text: "Create a jumping sequence", category: "jump" },
+  { text: "I want a leap animation", category: "jump" },
+  { text: "Make a hop animation", category: "jump" },
+  { text: "Generate jumping frames", category: "jump" },
+  
+  // Air attack examples
   { text: "Make an air attack", category: "air_attack" },
+  { text: "Create an aerial attack", category: "air_attack" },
+  { text: "Generate a flying attack", category: "air_attack" },
+  { text: "I want a mid-air strike", category: "air_attack" },
+  { text: "Make an airborne attack", category: "air_attack" },
+  { text: "Create a diving attack", category: "air_attack" },
+  { text: "Generate aerial combat", category: "air_attack" },
+  
+  // Hurt animation examples
   { text: "Create a hurt animation", category: "hurt" },
+  { text: "Make a damage reaction", category: "hurt" },
+  { text: "Generate a pain animation", category: "hurt" },
+  { text: "I want a hit reaction", category: "hurt" },
+  { text: "Make my character take damage", category: "hurt" },
+  { text: "Create an injury animation", category: "hurt" },
+  { text: "Generate a recoil animation", category: "hurt" },
+  
+  // Knockout examples
   { text: "Generate a knockout sequence", category: "knock_out" },
+  { text: "Make a defeat animation", category: "knock_out" },
+  { text: "Create a KO animation", category: "knock_out" },
+  { text: "I want a falling down animation", category: "knock_out" },
+  { text: "Make my character get knocked out", category: "knock_out" },
+  { text: "Generate a death animation", category: "knock_out" },
+  { text: "Create a collapse sequence", category: "knock_out" },
+  
+  // Punch animation examples
   { text: "Make a punch combo", category: "punches" },
+  { text: "Create fighting animations", category: "punches" },
+  { text: "Generate punch attacks", category: "punches" },
+  { text: "I want combat animations", category: "punches" },
+  { text: "Make boxing animations", category: "punches" },
+  { text: "Create attack combinations", category: "punches" },
+  { text: "Generate melee attacks", category: "punches" },
+  { text: "Make striking animations", category: "punches" },
+  
+  // Turn around examples
   { text: "Create a turn around animation", category: "turn_around" },
+  { text: "Make my character turn", category: "turn_around" },
+  { text: "Generate a rotation animation", category: "turn_around" },
+  { text: "I want a spinning animation", category: "turn_around" },
+  { text: "Make a turning sequence", category: "turn_around" },
+  { text: "Create a pivot animation", category: "turn_around" },
   
   // Unknown examples
   { text: "How does this work?", category: "unknown" },
   { text: "What can you do?", category: "unknown" },
-  { text: "Help me understand", category: "unknown" }
+  { text: "Help me understand", category: "unknown" },
+  { text: "I need help", category: "unknown" },
+  { text: "What features are available?", category: "unknown" }
 ];
 
 /**
@@ -163,7 +227,7 @@ async function handleCharacterGeneration(message) {
   console.log('🎨 STUB: handleCharacterGeneration called');
   console.log('📝 Message:', message);
   console.log('🔄 This will generate a new character using DALL-E 3');
-  return 'character_generation';
+  return 'character';
 }
 
 async function handleIdleAnimation(message) {

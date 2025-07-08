@@ -1411,18 +1411,102 @@ function delay(ms) {
 
 // Function to generate the selected action
 async function generateSelectedAction() {
+  console.log('🎬 [WIZARD] generateSelectedAction called');
+  
   const state = getState();
-  // Ensure we have both style and action selected
+  console.log('🔍 [WIZARD] Current state:', {
+    selectedStyle: state.selectedStyle,
+    selectedAction: state.selectedAction,
+    hasUploadedImage: !!state.uploadedImage,
+    hasGeneratedStyles: !!(state.generatedStyles && state.generatedStyles.length > 0),
+    hasGeneratedCharacter: !!window.generatedCharacterUrl
+  });
+  
+  // Get dropdown element and log its state
   const actionSelect = document.getElementById('actionSelect');
+  console.log('🔧 [WIZARD] Dropdown element state:', {
+    exists: !!actionSelect,
+    value: actionSelect ? actionSelect.value : 'NO_ELEMENT',
+    selectedIndex: actionSelect ? actionSelect.selectedIndex : 'NO_ELEMENT',
+    optionsCount: actionSelect ? actionSelect.options.length : 'NO_ELEMENT',
+    allOptions: actionSelect ? Array.from(actionSelect.options).map(opt => ({
+      value: opt.value,
+      text: opt.text,
+      selected: opt.selected
+    })) : 'NO_ELEMENT'
+  });
+  
+  // Ensure we have both style and action selected
   const selectedAction = actionSelect ? actionSelect.value : null;
   
-  if (!state.selectedStyle || !selectedAction) {
+  console.log('🔍 [WIZARD] Validation check:', {
+    'state.selectedStyle': state.selectedStyle,
+    'selectedAction (from dropdown)': selectedAction,
+    'actionSelect exists': !!actionSelect,
+    'actionSelect.value': actionSelect ? actionSelect.value : 'N/A',
+    'validation will pass': !!(state.selectedStyle && selectedAction)
+  });
+  
+  // Additional debugging for empty dropdown value
+  if (!selectedAction || selectedAction === '') {
+    console.error('❌ [WIZARD] Dropdown validation details:', {
+      dropdownExists: !!actionSelect,
+      dropdownValue: actionSelect ? actionSelect.value : 'NO_ELEMENT',
+      dropdownValueType: actionSelect ? typeof actionSelect.value : 'NO_ELEMENT',
+      dropdownValueLength: actionSelect ? actionSelect.value.length : 'NO_ELEMENT',
+      dropdownSelectedIndex: actionSelect ? actionSelect.selectedIndex : 'NO_ELEMENT',
+      dropdownOptionsLength: actionSelect ? actionSelect.options.length : 'NO_ELEMENT',
+      firstOptionValue: actionSelect && actionSelect.options.length > 0 ? actionSelect.options[0].value : 'NO_OPTIONS',
+      selectedOptionExists: actionSelect && actionSelect.selectedIndex >= 0 && actionSelect.options[actionSelect.selectedIndex] ? true : false,
+      selectedOptionValue: actionSelect && actionSelect.selectedIndex >= 0 && actionSelect.options[actionSelect.selectedIndex] ? actionSelect.options[actionSelect.selectedIndex].value : 'NO_SELECTED_OPTION',
+      stateSelectedAction: state.selectedAction
+    });
+    
+    // Try to fix the dropdown selection if we have state data
+    if (state.selectedAction && actionSelect) {
+      console.warn('⚠️ [WIZARD] Attempting to fix dropdown selection using state data');
+      actionSelect.value = state.selectedAction;
+      
+      // Trigger change event
+      const changeEvent = new Event('change', { bubbles: true });
+      actionSelect.dispatchEvent(changeEvent);
+      
+      // Update selectedAction variable
+      const newSelectedAction = actionSelect.value;
+      console.log('🔧 [WIZARD] After fixing dropdown:', {
+        oldValue: selectedAction,
+        newValue: newSelectedAction,
+        fixSuccessful: newSelectedAction === state.selectedAction
+      });
+      
+      if (newSelectedAction && newSelectedAction !== '') {
+        // Update the selectedAction variable for the rest of the function
+        console.log('✅ [WIZARD] Dropdown fix successful, continuing with generation');
+        // We'll update selectedAction later in the function
+      }
+    }
+  }
+  
+  // Re-check after potential fix
+  const finalSelectedAction = actionSelect ? actionSelect.value : null;
+  
+  if (!state.selectedStyle || !finalSelectedAction) {
+    console.error('❌ [WIZARD] Validation failed:', {
+      missingStyle: !state.selectedStyle,
+      missingAction: !finalSelectedAction,
+      stateSelectedStyle: state.selectedStyle,
+      dropdownSelectedAction: finalSelectedAction,
+      originalDropdownValue: selectedAction,
+      fixAttempted: selectedAction !== finalSelectedAction
+    });
     alert('Please select both a style and an action');
     return;
   }
   
-  // Update state with selected action
-  updateState({ selectedAction });
+  console.log('✅ [WIZARD] Validation passed, proceeding with generation');
+  
+  // Update state with selected action (use the final value from dropdown)
+  updateState({ selectedAction: finalSelectedAction });
   
   // Get UI elements
   const generateActionBtn = document.getElementById('generateActionBtn');
@@ -1489,13 +1573,34 @@ async function generateSelectedAction() {
     // We'll select the appropriate input image for the first frame
     let inputImage = null;
     
-    // Check if we're using the "original" style, which should use the uploaded image directly
-    if (state.selectedStyle === 'original') {
+    // PRIORITY 1: Use the generated character from step 1 if available
+    if (window.generatedCharacterUrl) {
+      console.log('✅ Using generated character from step 1 as primary input');
+      try {
+        // Convert the generated character data URL to a File object
+        const response = await fetch(window.generatedCharacterUrl);
+        const blob = await response.blob();
+        inputImage = new File([blob], 'generated_character.png', { type: 'image/png' });
+        
+        console.log('✅ Successfully converted generated character to File:', {
+          type: inputImage.type,
+          size: inputImage.size,
+          source: 'DALL-E 3 generated character'
+        });
+      } catch (err) {
+        console.warn('⚠️ Failed to convert generated character, trying other sources:', err);
+      }
+    }
+    
+    // PRIORITY 2: If no generated character, check if we're using the "original" style
+    if (!inputImage && state.selectedStyle === 'original') {
       // For original style, use the uploaded image as-is
       inputImage = state.uploadedImage;
       console.log('Using original uploaded image for Original Style');
-    } else {
-      // For generated styles, try to get the styled image
+    } 
+    
+    // PRIORITY 3: For generated styles, try to get the styled image
+    if (!inputImage && state.selectedStyle !== 'original') {
       try {
         // Get the styled image directly from the DOM - it's already displayed in the preview
         const styledImagePreview = document.getElementById('styledImagePreview');
@@ -1528,15 +1633,37 @@ async function generateSelectedAction() {
           }
         }
       } catch (err) {
-        console.warn('Could not get styled image, falling back to original upload', err);
+        console.warn('Could not get styled image, will try fallbacks', err);
       }
     }
     
-    // Final fallback to the original image if all else fails
-    if (!inputImage) {
-      console.log('No styled image found, using original upload as fallback');
+    // PRIORITY 4: Final fallback to the original uploaded image if all else fails
+    if (!inputImage && state.uploadedImage) {
+      console.log('No other image found, using original upload as fallback');
       inputImage = state.uploadedImage;
     }
+    
+    // PRIORITY 5: If still no image, show detailed debug information
+    if (!inputImage) {
+      console.error('❌ No input image found! Debug info:', {
+        hasGeneratedCharacter: !!window.generatedCharacterUrl,
+        generatedCharacterUrl: window.generatedCharacterUrl ? 'Present' : 'Missing',
+        selectedStyle: state.selectedStyle,
+        hasUploadedImage: !!state.uploadedImage,
+        hasGeneratedStyles: !!(state.generatedStyles && state.generatedStyles.length > 0),
+        styledImagePreview: !!document.getElementById('styledImagePreview')
+      });
+      throw new Error('No input image available for animation generation. Please ensure you have a generated character from step 1 or an uploaded image.');
+    }
+    
+    console.log('🎯 Final input image selected:', {
+      type: inputImage.type,
+      size: inputImage.size,
+      name: inputImage.name,
+      priority: window.generatedCharacterUrl ? 'Generated Character (Step 1)' : 
+                state.selectedStyle === 'original' ? 'Original Upload' : 
+                'Styled Image'
+    });
     
     // Generate frames one by one in sequence
     for (let i = 0; i < frameCount; i++) {
@@ -2770,3 +2897,4 @@ function showActionError(title, message) {
     generateActionBtn.disabled = true;
   }
 }
+

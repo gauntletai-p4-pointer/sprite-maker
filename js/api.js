@@ -136,7 +136,6 @@ export async function callOpenAIEdit(prompt, inputImage, apiKey) {
     formData.append('prompt', prompt);
     formData.append('n', '1');
     formData.append('size', '1024x1024');
-    formData.append('response_format', 'b64_json');
     
     if (inputImage) {
       formData.append('image', inputImage);

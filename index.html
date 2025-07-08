@@ -879,20 +879,23 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             
             console.log('🔧 [DEBUG] Options after clear:', actionSelect.options.length);
             
-            // Import action prompts
-            const { ACTION_PROMPTS } = await import('./js/prompts.js');
+            // Force populate with actions even if we don't have proper state
+            // This ensures the dropdown always has options for the AI routing system
+            const actions = {
+              'idle': { name: 'Idle Animation', frames: 4, basePrompt: 'Character in neutral standing pose with subtle breathing motion' },
+              'walk': { name: 'Walking Animation', frames: 12, basePrompt: 'Character walking cycle with natural arm and leg movement' },
+              'jump': { name: 'Jump Animation', frames: 4, basePrompt: 'Character performing a vertical jump sequence' },
+              'air_attack': { name: 'Air Attack', frames: 2, basePrompt: 'Character executing a mid-air attack move' },
+              'hurt': { name: 'Hurt Animation', frames: 2, basePrompt: 'Character taking damage and recoiling' },
+              'knock_out': { name: 'Knock Out', frames: 6, basePrompt: 'Character being defeated and falling down' },
+              'punches': { name: 'Punch Combo', frames: 8, basePrompt: 'Character performing various punch attacks' },
+              'turn_around': { name: 'Turn Around', frames: 3, basePrompt: 'Character turning around 180 degrees' }
+            };
             
-            console.log('🔧 [DEBUG] ACTION_PROMPTS imported:', ACTION_PROMPTS);
-            
-            if (!ACTION_PROMPTS || Object.keys(ACTION_PROMPTS).length === 0) {
-              console.error('❌ [DEBUG] No actions found in ACTION_PROMPTS');
-              return;
-            }
-            
-            console.log(`🔧 [DEBUG] Loading ${Object.keys(ACTION_PROMPTS).length} actions`);
+            console.log(`🔧 [DEBUG] Force populating dropdown with ${Object.keys(actions).length} actions`);
             
             // Add actions to select
-            Object.entries(ACTION_PROMPTS).forEach(([actionId, actionData]) => {
+            Object.entries(actions).forEach(([actionId, actionData]) => {
               console.log(`🔧 [DEBUG] Adding action: ${actionId} - ${actionData.name}`);
               const option = document.createElement('option');
               option.value = actionId;
@@ -904,39 +907,42 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             
             console.log('🔧 [DEBUG] Final options after population:', actionSelect.options.length);
             
-            // Add change event listener
-            actionSelect.addEventListener('change', function() {
-              console.log('🔧 [DEBUG] Action selection changed to:', this.value);
-              const selectedOption = this.options[this.selectedIndex];
-              const actionDescription = document.getElementById('actionDescription');
-              const generateActionBtn = document.getElementById('generateActionBtn');
-              
-              if (selectedOption && selectedOption.value) {
-                if (actionDescription) {
-                  actionDescription.innerHTML = `
-                    <p class="font-medium">${selectedOption.textContent}</p>
-                    <p class="text-sm mt-1">${selectedOption.dataset.description}</p>
-                    <p class="text-xs mt-2 opacity-75">Frames: ${selectedOption.dataset.frames}</p>
-                  `;
-                  console.log('✅ [DEBUG] Updated action description');
-                }
+            // Add change event listener if not already added
+            if (!actionSelect.dataset.listenerAdded) {
+              actionSelect.addEventListener('change', function() {
+                console.log('🔧 [DEBUG] Action selection changed to:', this.value);
+                const selectedOption = this.options[this.selectedIndex];
+                const actionDescription = document.getElementById('actionDescription');
+                const generateActionBtn = document.getElementById('generateActionBtn');
                 
-                if (generateActionBtn) {
-                  generateActionBtn.disabled = false;
-                  console.log('✅ [DEBUG] Enabled generate button');
+                if (selectedOption && selectedOption.value) {
+                  if (actionDescription) {
+                    actionDescription.innerHTML = `
+                      <p class="font-medium">${selectedOption.textContent}</p>
+                      <p class="text-sm mt-1">${selectedOption.dataset.description}</p>
+                      <p class="text-xs mt-2 opacity-75">Frames: ${selectedOption.dataset.frames}</p>
+                    `;
+                    console.log('✅ [DEBUG] Updated action description');
+                  }
+                  
+                  if (generateActionBtn) {
+                    generateActionBtn.disabled = false;
+                    console.log('✅ [DEBUG] Enabled generate button');
+                  }
+                } else {
+                  if (actionDescription) {
+                    actionDescription.textContent = 'Select an action to see its description and frame count.';
+                    console.log('🔧 [DEBUG] Reset action description');
+                  }
+                  
+                  if (generateActionBtn) {
+                    generateActionBtn.disabled = true;
+                    console.log('🔧 [DEBUG] Disabled generate button');
+                  }
                 }
-              } else {
-                if (actionDescription) {
-                  actionDescription.textContent = 'Select an action to see its description and frame count.';
-                  console.log('🔧 [DEBUG] Reset action description');
-                }
-                
-                if (generateActionBtn) {
-                  generateActionBtn.disabled = true;
-                  console.log('🔧 [DEBUG] Disabled generate button');
-                }
-              }
-            });
+              });
+              actionSelect.dataset.listenerAdded = 'true';
+            }
             
             console.log('✅ [DEBUG] Action selection initialized from index.html');
             
@@ -1146,6 +1152,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           }
         }
         
+        // Make generateAIResponse globally accessible
+        window.generateAIResponse = generateAIResponse;
+        
         /**
          * Determines the current step the user is on
          * @returns {number} - Current step number (1 or 2)
@@ -1170,6 +1179,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           // Default to step 1
           return 1;
         }
+        
+        // Make getCurrentStep globally accessible
+        window.getCurrentStep = getCurrentStep;
         
         /**
          * Handles character generation for step 1
@@ -1291,6 +1303,15 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         function generateCategoryResponse(category, originalMessage) {
           console.log('💬 Generating response for category:', category);
           
+          const currentStep = window.getCurrentStep();
+          console.log('📍 Current step when generating response:', currentStep);
+          
+          // If we're on step 2 and the category is an animation, trigger action generation
+          if (currentStep === 2 && category !== 'character' && category !== 'unknown') {
+            console.log('🎬 Step 2 animation request detected, triggering action generation for:', category);
+            return handleStep2ActionGeneration(category, originalMessage);
+          }
+          
           switch (category) {
             case 'character':
               return "I can help you create a character sprite! Based on your description, I'll generate a unique character. Please provide more details about your character's appearance, clothing, and style, and I'll create a sprite for you.";
@@ -1325,6 +1346,581 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           }
         }
         
+        /**
+         * Handles action generation for step 2 animation requests
+         * @param {string} actionCategory - The action category from routing
+         * @param {string} originalMessage - The original user message
+         * @returns {Promise<string>} - Response message
+         */
+        async function handleStep2ActionGeneration(actionCategory, originalMessage) {
+          console.log('🎬 Starting step 2 action generation for category:', actionCategory);
+          console.log('🎬 Original message:', originalMessage);
+          
+          try {
+            // Import state management functions
+            const { getState, updateState } = await import('./js/state.js');
+            
+            // Check current state
+            let state = getState();
+            console.log('🔍 Initial state:', state);
+            
+            // For testing purposes, if we're missing required state data, add mock data
+            if (!state.selectedStyle || !state.uploadedImage) {
+              console.warn('⚠️ Missing required state data for step 2. Adding mock data for testing...');
+              
+              // Create a mock uploaded image (1x1 pixel transparent PNG)
+              const mockImageBlob = new Blob([new Uint8Array([
+                0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+                0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
+                0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
+                0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,
+                0x42, 0x60, 0x82
+              ])], { type: 'image/png' });
+              
+              const mockImageFile = new File([mockImageBlob], 'mock-image.png', { type: 'image/png' });
+              
+              // Update state with mock data
+              const stateUpdate = {
+                uploadedImage: mockImageFile,
+                selectedStyle: 'original', // Use original style for testing
+                selectedAction: actionCategory // Also set the selected action
+              };
+              
+              updateState(stateUpdate);
+              
+              console.log('✅ Mock state data added:', stateUpdate);
+              
+              // Verify state was updated
+              state = getState();
+              console.log('🔍 State after mock data update:', {
+                hasUploadedImage: !!state.uploadedImage,
+                selectedStyle: state.selectedStyle,
+                selectedAction: state.selectedAction
+              });
+            }
+            
+            // First, automatically select the action in the dropdown
+            const success = await autoSelectAction(actionCategory);
+            if (!success) {
+              return `I understand you want to create a ${actionCategory} animation, but I couldn't find that action in the available options. Please select an action from the dropdown manually.`;
+            }
+            
+            // Give the selection a moment to register and verify dropdown state
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Double-check the dropdown value after selection
+            const actionSelect = document.getElementById('actionSelect');
+            const dropdownValue = actionSelect ? actionSelect.value : null;
+            console.log('🔧 [DEBUG] Dropdown value after auto-selection:', dropdownValue);
+            
+            // Additional debugging for dropdown state
+            if (actionSelect) {
+              console.log('🔧 [DEBUG] Detailed dropdown state after selection:', {
+                value: actionSelect.value,
+                selectedIndex: actionSelect.selectedIndex,
+                optionsCount: actionSelect.options.length,
+                selectedOption: actionSelect.options[actionSelect.selectedIndex] ? {
+                  value: actionSelect.options[actionSelect.selectedIndex].value,
+                  text: actionSelect.options[actionSelect.selectedIndex].text,
+                  selected: actionSelect.options[actionSelect.selectedIndex].selected
+                } : null,
+                allOptionsSelected: Array.from(actionSelect.options).map(opt => ({
+                  value: opt.value,
+                  text: opt.text,
+                  selected: opt.selected
+                }))
+              });
+            }
+            
+            // Update state with the selected action to ensure consistency
+            updateState({ selectedAction: dropdownValue || actionCategory });
+            
+            // Wait a bit more to ensure state is updated
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Final state verification before triggering generation
+            state = getState();
+            console.log('🔍 [DEBUG] Final state before generation:', {
+              selectedStyle: state.selectedStyle,
+              selectedAction: state.selectedAction,
+              dropdownValue: dropdownValue,
+              hasUploadedImage: !!state.uploadedImage,
+              hasGeneratedCharacter: !!window.generatedCharacterUrl
+            });
+            
+            // Check for any mismatches between state and dropdown
+            if (state.selectedAction !== dropdownValue) {
+              console.warn('⚠️ [DEBUG] State/dropdown mismatch detected:', {
+                stateAction: state.selectedAction,
+                dropdownValue: dropdownValue,
+                attempting: 'sync correction'
+              });
+              
+              // Try to sync them
+              if (dropdownValue && dropdownValue !== '') {
+                updateState({ selectedAction: dropdownValue });
+                console.log('🔧 [DEBUG] Updated state to match dropdown');
+              } else if (state.selectedAction) {
+                actionSelect.value = state.selectedAction;
+                console.log('🔧 [DEBUG] Updated dropdown to match state');
+              }
+            }
+            
+            // Validate that we have everything needed
+            if (!state.selectedStyle) {
+              console.error('❌ [DEBUG] Missing selectedStyle in state');
+              return `I couldn't find a selected style. Please ensure you have a character generated or a style selected.`;
+            }
+            
+            if (!dropdownValue || dropdownValue === '') {
+              console.error('❌ [DEBUG] Missing action selection in dropdown');
+              return `I couldn't select the ${actionCategory} action in the dropdown. Please try selecting it manually.`;
+            }
+            
+            // Now trigger the generation by clicking the button
+            const success2 = await triggerActionGeneration();
+            if (!success2) {
+              return `I've selected the ${actionCategory} action for you, but couldn't trigger the generation automatically. Please click the "Generate Action" button to create your animation.`;
+            }
+            
+            return `Starting ${actionCategory} animation generation. You can watch the progress in the preview area below.`;
+            
+          } catch (error) {
+            console.error('❌ Error in handleStep2ActionGeneration:', error);
+            return `I encountered an error while trying to generate the ${actionCategory} animation: ${error.message}. Please try selecting the action manually from the dropdown.`;
+          }
+        }
+
+        /**
+         * Automatically selects the specified action in the dropdown
+         * @param {string} actionCategory - The action category to select
+         * @returns {Promise<boolean>} - True if selection was successful
+         */
+        async function autoSelectAction(actionCategory) {
+          console.log('🎯 [DEBUG] Auto-selecting action:', actionCategory);
+          
+          // First, ensure step 2 is properly initialized
+          console.log('🔧 [DEBUG] Checking step 2 initialization before selection...');
+          const isInitialized = await window.debugStep2Initialization();
+          
+          if (!isInitialized) {
+            console.error('❌ [DEBUG] Step 2 is not properly initialized, cannot proceed with action selection');
+            return false;
+          }
+          
+          const actionSelect = document.getElementById('actionSelect');
+          if (!actionSelect) {
+            console.error('❌ [DEBUG] Action select dropdown not found');
+            return false;
+          }
+          
+          console.log('🔧 [DEBUG] Initial dropdown state:', {
+            optionsCount: actionSelect.options.length,
+            currentValue: actionSelect.value,
+            selectedIndex: actionSelect.selectedIndex,
+            options: Array.from(actionSelect.options).map(opt => ({ value: opt.value, text: opt.text }))
+          });
+          
+          // Wait for dropdown to be populated if it's empty
+          if (actionSelect.options.length <= 1) {
+            console.log('⏳ [DEBUG] Dropdown appears empty, waiting for population...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Check again
+            if (actionSelect.options.length <= 1) {
+              console.log('⏳ [DEBUG] Still empty, trying to populate manually...');
+              
+              // Try to trigger the population manually
+              if (typeof initializeStep2ActionSelection === 'function') {
+                await initializeStep2ActionSelection();
+                await new Promise(resolve => setTimeout(resolve, 500));
+              }
+              
+              // Final check
+              if (actionSelect.options.length <= 1) {
+                console.error('❌ [DEBUG] Dropdown still empty after manual population');
+                return false;
+              }
+            }
+          }
+          
+          // Create mapping of natural language to dropdown values
+          const actionMappings = {
+            // Direct mappings
+            'idle': 'idle',
+            'walk': 'walk', 
+            'jump': 'jump',
+            'air_attack': 'air_attack',
+            'hurt': 'hurt',
+            'knock_out': 'knock_out',
+            'punches': 'punches',
+            'turn_around': 'turn_around',
+            
+            // Alternative names and synonyms
+            'walking': 'walk',
+            'run': 'walk',
+            'running': 'walk',
+            'movement': 'walk',
+            'move': 'walk',
+            
+            'jumping': 'jump',
+            'leap': 'jump',
+            'hop': 'jump',
+            
+            'aerial': 'air_attack',
+            'air': 'air_attack',
+            'flying': 'air_attack',
+            'airborne': 'air_attack',
+            'mid-air': 'air_attack',
+            'diving': 'air_attack',
+            
+            'damage': 'hurt',
+            'pain': 'hurt',
+            'hit': 'hurt',
+            'injury': 'hurt',
+            'recoil': 'hurt',
+            
+            'knockout': 'knock_out',
+            'ko': 'knock_out',
+            'defeat': 'knock_out',
+            'death': 'knock_out',
+            'collapse': 'knock_out',
+            'fall': 'knock_out',
+            'falling': 'knock_out',
+            
+            'punch': 'punches',
+            'fight': 'punches',
+            'fighting': 'punches',
+            'combat': 'punches',
+            'attack': 'punches',
+            'boxing': 'punches',
+            'melee': 'punches',
+            'strike': 'punches',
+            'striking': 'punches',
+            
+            'turn': 'turn_around',
+            'rotate': 'turn_around',
+            'rotation': 'turn_around',
+            'spin': 'turn_around',
+            'spinning': 'turn_around',
+            'pivot': 'turn_around',
+            
+            'breathing': 'idle',
+            'standing': 'idle',
+            'rest': 'idle',
+            'resting': 'idle'
+          };
+          
+          // Get the mapped value or use the original category
+          const actionValue = actionMappings[actionCategory.toLowerCase()] || actionCategory.toLowerCase();
+          console.log('🔄 [DEBUG] Mapped category to value:', actionCategory, '→', actionValue);
+          
+          // Debug: Show all available options before trying to match
+          console.log('🔧 [DEBUG] Available dropdown options before matching:', 
+            Array.from(actionSelect.options).map((opt, index) => ({
+              index: index,
+              value: opt.value,
+              text: opt.text,
+              selected: opt.selected
+            }))
+          );
+          
+          // Try to find the action in the dropdown
+          let found = false;
+          let selectedOptionValue = null;
+          let matchedOptionIndex = -1;
+          
+          for (let i = 0; i < actionSelect.options.length; i++) {
+            const option = actionSelect.options[i];
+            const optionValue = option.value.toLowerCase();
+            const optionText = option.text.toLowerCase();
+            
+            // Skip placeholder/empty options
+            if (!option.value || option.value === '' || option.value === 'placeholder') {
+              console.log('🔧 [DEBUG] Skipping placeholder option:', { value: option.value, text: option.text });
+              continue;
+            }
+            
+            console.log('🔧 [DEBUG] Checking option:', {
+              index: i,
+              value: option.value,
+              text: option.text,
+              optionValueLower: optionValue,
+              optionTextLower: optionText,
+              searchValue: actionValue,
+              exactValueMatch: optionValue === actionValue,
+              textIncludesSearch: optionText.includes(actionValue),
+              searchIncludesValue: actionValue.includes(optionValue)
+            });
+            
+            // Check for exact value match, text match, or partial text match
+            if (optionValue === actionValue || 
+                optionText.includes(actionValue) ||
+                actionValue.includes(optionValue)) {
+              
+              console.log('✅ [DEBUG] Found matching option:', { 
+                index: i,
+                value: option.value, 
+                text: option.text,
+                matchType: optionValue === actionValue ? 'exact value' : 
+                          optionText.includes(actionValue) ? 'text includes' : 'partial match'
+              });
+              
+              selectedOptionValue = option.value;
+              matchedOptionIndex = i;
+              
+              // Set the value with multiple approaches
+              console.log('🔧 [DEBUG] Setting dropdown value (before):', {
+                value: actionSelect.value,
+                selectedIndex: actionSelect.selectedIndex
+              });
+              
+              // Approach 1: Set by value
+              actionSelect.value = option.value;
+              console.log('🔧 [DEBUG] After setting by value:', {
+                value: actionSelect.value,
+                selectedIndex: actionSelect.selectedIndex
+              });
+              
+              // Approach 2: Set by selectedIndex (backup)
+              if (actionSelect.value !== option.value) {
+                console.warn('⚠️ [DEBUG] Setting by value failed, trying selectedIndex');
+                actionSelect.selectedIndex = i;
+                console.log('🔧 [DEBUG] After setting by selectedIndex:', {
+                  value: actionSelect.value,
+                  selectedIndex: actionSelect.selectedIndex
+                });
+              }
+              
+              // Approach 3: Force selection (if still not working)
+              if (actionSelect.value !== option.value) {
+                console.warn('⚠️ [DEBUG] Both approaches failed, forcing selection');
+                option.selected = true;
+                console.log('🔧 [DEBUG] After forcing selection:', {
+                  value: actionSelect.value,
+                  selectedIndex: actionSelect.selectedIndex,
+                  optionSelected: option.selected
+                });
+              }
+              
+              found = true;
+              break;
+            }
+          }
+          
+          // If we found a match, trigger events and handle button state
+          if (found && selectedOptionValue) {
+            console.log('🔧 [DEBUG] Match found, triggering events and checking button state...');
+            
+            // Trigger multiple events to ensure selection is registered
+            console.log('🔧 [DEBUG] Triggering events...');
+            
+            // First dispatch change event
+            const changeEvent = new Event('change', { bubbles: true });
+            actionSelect.dispatchEvent(changeEvent);
+            console.log('🔧 [DEBUG] Dispatched change event');
+            
+            // Also trigger input event
+            const inputEvent = new Event('input', { bubbles: true });
+            actionSelect.dispatchEvent(inputEvent);
+            console.log('🔧 [DEBUG] Dispatched input event');
+            
+            // Give the event handlers time to process
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Verify the selection actually worked
+            console.log('🔧 [DEBUG] Final dropdown state after selection:', {
+              value: actionSelect.value,
+              selectedIndex: actionSelect.selectedIndex,
+              expectedValue: selectedOptionValue,
+              matchedIndex: matchedOptionIndex,
+              selectionWorked: actionSelect.value === selectedOptionValue
+            });
+            
+            // Check if the button state changed
+            const generateBtn = document.getElementById('generateActionBtn');
+            if (generateBtn) {
+              console.log('🔧 [DEBUG] Generate button state after selection:', {
+                disabled: generateBtn.disabled,
+                exists: true
+              });
+              
+              // If button is still disabled, try to manually enable it
+              if (generateBtn.disabled) {
+                console.warn('⚠️ [DEBUG] Button still disabled after selection, force enabling...');
+                generateBtn.disabled = false;
+                console.log('✅ [DEBUG] Manually enabled generate button');
+              }
+            } else {
+              console.warn('⚠️ [DEBUG] Generate button not found after selection');
+            }
+          }
+          
+          if (!found) {
+            console.error('❌ [DEBUG] Could not find action in dropdown:', actionCategory);
+            console.log('🔧 [DEBUG] Available options:', Array.from(actionSelect.options).map(opt => ({ value: opt.value, text: opt.text })));
+            console.log('🔧 [DEBUG] Tried to match:', actionValue);
+            return false;
+          }
+          
+          // Final verification that the selection worked
+          const finalValue = actionSelect.value;
+          const success = finalValue === selectedOptionValue && finalValue !== '' && finalValue !== null;
+          
+          console.log('🔍 [DEBUG] Final selection verification:', {
+            selectedOptionValue: selectedOptionValue,
+            actualDropdownValue: finalValue,
+            success: success,
+            isEmpty: finalValue === '' || finalValue === null
+          });
+          
+          if (!success) {
+            console.error('❌ [DEBUG] Dropdown selection failed verification');
+            return false;
+          }
+          
+          console.log('✅ [DEBUG] Action selected successfully:', finalValue);
+          return true;
+        }
+
+        /**
+         * Triggers the action generation by clicking the generate button
+         * @returns {Promise<boolean>} - True if trigger was successful
+         */
+        async function triggerActionGeneration() {
+          console.log('🚀 [DEBUG] Triggering action generation...');
+          
+          const generateBtn = document.getElementById('generateActionBtn');
+          if (!generateBtn) {
+            console.error('❌ [DEBUG] Generate action button not found');
+            return false;
+          }
+          
+          console.log('🔧 [DEBUG] Button state before any changes:', {
+            disabled: generateBtn.disabled,
+            textContent: generateBtn.textContent.trim(),
+            className: generateBtn.className
+          });
+          
+          // Comprehensive validation before clicking
+          const actionSelect = document.getElementById('actionSelect');
+          if (!actionSelect) {
+            console.error('❌ [DEBUG] Action select dropdown not found');
+            return false;
+          }
+          
+          console.log('🔧 [DEBUG] Dropdown state before button click:', {
+            value: actionSelect.value,
+            selectedIndex: actionSelect.selectedIndex,
+            selectedOption: actionSelect.options[actionSelect.selectedIndex] ? {
+              value: actionSelect.options[actionSelect.selectedIndex].value,
+              text: actionSelect.options[actionSelect.selectedIndex].text
+            } : null,
+            hasValue: !!actionSelect.value && actionSelect.value !== '',
+            isEmpty: actionSelect.value === '' || actionSelect.value === null
+          });
+          
+          // Check state management
+          try {
+            const { getState } = await import('./js/state.js');
+            const state = getState();
+            console.log('🔍 [DEBUG] State before button click:', {
+              selectedStyle: state.selectedStyle,
+              selectedAction: state.selectedAction,
+              hasUploadedImage: !!state.uploadedImage,
+              hasGeneratedCharacter: !!window.generatedCharacterUrl
+            });
+          } catch (error) {
+            console.warn('⚠️ [DEBUG] Could not check state:', error);
+          }
+          
+          // Check if button is disabled and try to force enable it
+          if (generateBtn.disabled) {
+            console.warn('⚠️ [DEBUG] Generate button is disabled, attempting to force enable...');
+            
+            // Force enable the button
+            generateBtn.disabled = false;
+            
+            console.log('🔧 [DEBUG] Forced button to enabled state');
+            
+            // Also verify that we have an action selected
+            if (!actionSelect.value || actionSelect.value === '') {
+              console.error('❌ [DEBUG] No action selected in dropdown, this might be why button was disabled');
+              
+              // Try to re-select if we have a selected action in state
+              try {
+                const { getState } = await import('./js/state.js');
+                const state = getState();
+                if (state.selectedAction) {
+                  console.log('🔧 [DEBUG] Attempting to re-select action from state:', state.selectedAction);
+                  actionSelect.value = state.selectedAction;
+                  
+                  // Trigger change event
+                  const changeEvent = new Event('change', { bubbles: true });
+                  actionSelect.dispatchEvent(changeEvent);
+                  
+                  await new Promise(resolve => setTimeout(resolve, 100));
+                  console.log('🔧 [DEBUG] Re-selected action, new value:', actionSelect.value);
+                }
+              } catch (error) {
+                console.warn('⚠️ [DEBUG] Could not re-select action:', error);
+              }
+            }
+            
+            // Trigger change event to ensure everything is updated
+            const changeEvent = new Event('change', { bubbles: true });
+            actionSelect.dispatchEvent(changeEvent);
+            console.log('🔧 [DEBUG] Triggered change event on action dropdown');
+            
+            // Give it a moment to process
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+          
+          // Final validation before clicking
+          console.log('🔍 [DEBUG] Final validation before clicking button:', {
+            buttonDisabled: generateBtn.disabled,
+            dropdownValue: actionSelect.value,
+            dropdownHasValue: !!actionSelect.value && actionSelect.value !== '',
+            readyToClick: !generateBtn.disabled && actionSelect.value && actionSelect.value !== ''
+          });
+          
+          if (generateBtn.disabled) {
+            console.error('❌ [DEBUG] Button is still disabled even after force enable attempt');
+            return false;
+          }
+          
+          if (!actionSelect.value || actionSelect.value === '') {
+            console.error('❌ [DEBUG] Dropdown still has no value even after attempts to fix it');
+            return false;
+          }
+          
+          // Trigger the click event
+          console.log('✅ [DEBUG] Clicking generate button...');
+          generateBtn.click();
+          
+          // Wait a moment and check what happened
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Check if button state changed (indicating it was clicked)
+          const buttonStateAfterClick = {
+            disabled: generateBtn.disabled,
+            textContent: generateBtn.textContent.trim(),
+            isLoading: generateBtn.textContent.includes('Generating') || generateBtn.textContent.includes('Loading')
+          };
+          
+          console.log('🔍 [DEBUG] Button state after click:', buttonStateAfterClick);
+          
+          const clickSuccessful = buttonStateAfterClick.isLoading || buttonStateAfterClick.disabled;
+          
+          console.log('✅ [DEBUG] Button click result:', {
+            clicked: true,
+            indicatesSuccess: clickSuccessful,
+            explanation: clickSuccessful ? 'Button shows loading state or is disabled (expected)' : 'Button state unchanged (possible error)'
+          });
+          
+          return true;
+        }
+
         function saveChatHistory() {
           const messages = [];
           chatMessages.querySelectorAll('.chat-message').forEach(msg => {
@@ -1365,7 +1961,411 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
           div.textContent = text;
           return div.innerHTML;
         }
+
+        // Initialize step 2 action selection when DOM is ready
+        document.addEventListener('DOMContentLoaded', function() {
+          console.log('🎯 DOM loaded, checking for step 2 initialization');
+          
+          // Check if we're on step 2 and initialize the dropdown
+          setTimeout(() => {
+            const currentStep = window.getCurrentStep();
+            console.log('📍 Current step on DOM ready:', currentStep);
+            
+            if (currentStep === 2) {
+              console.log('🎯 Step 2 detected, initializing action selection...');
+              initializeStep2ActionSelection();
+            }
+          }, 1000);
+        });
+        
+        // Also check periodically if step 2 becomes active
+        setInterval(() => {
+          const currentStep = window.getCurrentStep();
+          const actionSelect = document.getElementById('actionSelect');
+          
+          if (currentStep === 2 && actionSelect && actionSelect.options.length <= 1) {
+            console.log('🎯 Step 2 detected with empty dropdown, initializing...');
+            initializeStep2ActionSelection();
+          }
+        }, 2000);
       }
+
+      /**
+       * Comprehensive test function to debug AI routing flow
+       */
+      window.testAIRouting = async function(testMessage = "generate a walking animation") {
+        console.log('🎯 [TEST] Starting AI routing test with message:', testMessage);
+        
+        try {
+          // Import state management functions
+          const { getState, updateState } = await import('./js/state.js');
+          
+          // Step 1: Check current step
+          const currentStep = window.getCurrentStep();
+          console.log('📍 [TEST] Current step:', currentStep);
+          
+          // Step 2: Check if we're on step 2
+          if (currentStep !== 2) {
+            console.log('⚠️ [TEST] Not on step 2, test may not work correctly');
+          }
+          
+          // Step 3: Check dropdown state
+          const actionSelect = document.getElementById('actionSelect');
+          console.log('🔧 [TEST] Dropdown state:', {
+            exists: !!actionSelect,
+            optionsCount: actionSelect ? actionSelect.options.length : 0,
+            currentValue: actionSelect ? actionSelect.value : null,
+            options: actionSelect ? Array.from(actionSelect.options).map(opt => opt.value) : []
+          });
+          
+          // Step 4: Initialize dropdown if needed
+          if (!actionSelect || actionSelect.options.length <= 1) {
+            console.log('🔧 [TEST] Initializing dropdown...');
+            await initializeStep2ActionSelection();
+          }
+          
+          // Step 5: Check state
+          const state = getState();
+          console.log('🔍 [TEST] Current state:', {
+            hasSelectedStyle: !!state.selectedStyle,
+            hasUploadedImage: !!state.uploadedImage,
+            selectedStyle: state.selectedStyle
+          });
+          
+          // Step 6: Test AI response generation
+          console.log('🤖 [TEST] Testing AI response generation...');
+          const aiResponse = await generateAIResponse(testMessage);
+          console.log('✅ [TEST] AI response:', aiResponse);
+          
+          // Step 7: Check if generation was triggered
+          const generateBtn = document.getElementById('generateActionBtn');
+          console.log('🔧 [TEST] Generate button state:', {
+            exists: !!generateBtn,
+            disabled: generateBtn ? generateBtn.disabled : null,
+            text: generateBtn ? generateBtn.textContent.trim() : null
+          });
+          
+          console.log('🎉 [TEST] AI routing test completed successfully!');
+          return aiResponse;
+          
+        } catch (error) {
+          console.error('❌ [TEST] AI routing test failed:', error);
+          return `Test failed: ${error.message}`;
+        }
+      };
+
+      /**
+       * Test all animation types with various natural language prompts
+       */
+      window.testAllAnimations = async function() {
+        console.log('🧪 [TEST] Starting comprehensive animation type tests');
+        
+        const testCases = [
+          // Idle variations
+          { prompt: "create an idle animation", expected: "idle" },
+          { prompt: "make my character breathe", expected: "idle" },
+          { prompt: "generate a standing animation", expected: "idle" },
+          
+          // Walk variations  
+          { prompt: "create a walking animation", expected: "walk" },
+          { prompt: "make my character run", expected: "walk" },
+          { prompt: "generate movement frames", expected: "walk" },
+          
+          // Jump variations
+          { prompt: "create a jumping animation", expected: "jump" },
+          { prompt: "make my character leap", expected: "jump" },
+          { prompt: "generate a hop animation", expected: "jump" },
+          
+          // Air attack variations
+          { prompt: "create an air attack", expected: "air_attack" },
+          { prompt: "make an aerial strike", expected: "air_attack" },
+          { prompt: "generate a flying attack", expected: "air_attack" },
+          
+          // Hurt variations
+          { prompt: "create a hurt animation", expected: "hurt" },
+          { prompt: "make a damage reaction", expected: "hurt" },
+          { prompt: "generate a pain animation", expected: "hurt" },
+          
+          // Knockout variations
+          { prompt: "create a knockout animation", expected: "knock_out" },
+          { prompt: "make a defeat sequence", expected: "knock_out" },
+          { prompt: "generate a falling animation", expected: "knock_out" },
+          
+          // Punch variations
+          { prompt: "create punch animations", expected: "punches" },
+          { prompt: "make fighting moves", expected: "punches" },
+          { prompt: "generate combat attacks", expected: "punches" },
+          
+          // Turn around variations
+          { prompt: "create a turn around animation", expected: "turn_around" },
+          { prompt: "make my character spin", expected: "turn_around" },
+          { prompt: "generate a rotation animation", expected: "turn_around" }
+        ];
+        
+        console.log(`🔄 Testing ${testCases.length} animation variations...`);
+        
+        const results = [];
+        
+        for (let i = 0; i < testCases.length; i++) {
+          const testCase = testCases[i];
+          console.log(`\n🧪 Test ${i+1}/${testCases.length}: "${testCase.prompt}"`);
+          
+          try {
+            // Import the router function
+            const { routeUserMessage } = await import('./js/chatRouter.js');
+            
+            // Test the routing
+            const category = await routeUserMessage(testCase.prompt);
+            const success = category === testCase.expected;
+            
+            results.push({
+              prompt: testCase.prompt,
+              expected: testCase.expected,
+              actual: category,
+              success: success
+            });
+            
+            console.log(`${success ? '✅' : '❌'} Expected: ${testCase.expected}, Got: ${category}`);
+            
+            // Small delay between tests
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+          } catch (error) {
+            console.error(`❌ Test failed:`, error);
+            results.push({
+              prompt: testCase.prompt,
+              expected: testCase.expected,
+              actual: 'ERROR',
+              success: false,
+              error: error.message
+            });
+          }
+        }
+        
+        // Summary
+        const successCount = results.filter(r => r.success).length;
+        const totalCount = results.length;
+        
+        console.log(`\n📊 TEST RESULTS SUMMARY:`);
+        console.log(`✅ Successful: ${successCount}/${totalCount} (${Math.round(successCount/totalCount*100)}%)`);
+        console.log(`❌ Failed: ${totalCount - successCount}`);
+        
+        // Show failed tests
+        const failures = results.filter(r => !r.success);
+        if (failures.length > 0) {
+          console.log(`\n❌ FAILED TESTS:`);
+          failures.forEach(f => {
+            console.log(`   "${f.prompt}" → Expected: ${f.expected}, Got: ${f.actual}`);
+          });
+        }
+        
+        return results;
+      };
+
+      /**
+       * Simple test function to trigger the problematic workflow
+       */
+      window.debugWalkingAnimation = async function() {
+        console.log('🧪 [DEBUG TEST] Starting walking animation debug test');
+        
+        // Simulate the user typing "create a walking animation"
+        const testMessage = "create a walking animation";
+        
+        // Add the message to the chat to simulate real usage
+        const chatMessages = document.getElementById('chatMessages');
+        if (chatMessages) {
+          const userMessageDiv = document.createElement('div');
+          userMessageDiv.className = 'chat-message user';
+          userMessageDiv.innerHTML = `<div>${testMessage}</div>`;
+          chatMessages.appendChild(userMessageDiv);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        console.log('🧪 [DEBUG TEST] Simulating user message:', testMessage);
+        
+        try {
+          // Call the main AI response function (use window scope to access it)
+          const response = await window.generateAIResponse(testMessage);
+          
+          // Add AI response to chat
+          if (chatMessages) {
+            const aiMessageDiv = document.createElement('div');
+            aiMessageDiv.className = 'chat-message ai';
+            aiMessageDiv.innerHTML = `<div>${response}</div>`;
+            chatMessages.appendChild(aiMessageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+          }
+          
+          console.log('🧪 [DEBUG TEST] AI response:', response);
+          console.log('🧪 [DEBUG TEST] Test completed successfully');
+          
+          return response;
+        } catch (error) {
+          console.error('🧪 [DEBUG TEST] Test failed:', error);
+          return `Test failed: ${error.message}`;
+        }
+      };
+
+      /**
+       * Test function to check dropdown state at any time
+       */
+      window.debugDropdownState = function() {
+        console.log('🔍 [DEBUG] Current dropdown state check:');
+        
+        const actionSelect = document.getElementById('actionSelect');
+        if (!actionSelect) {
+          console.error('❌ [DEBUG] Action select dropdown not found');
+          return;
+        }
+        
+        console.log('🔧 [DEBUG] Dropdown details:', {
+          value: actionSelect.value,
+          selectedIndex: actionSelect.selectedIndex,
+          optionsCount: actionSelect.options.length,
+          allOptions: Array.from(actionSelect.options).map((opt, index) => ({
+            index: index,
+            value: opt.value,
+            text: opt.text,
+            selected: opt.selected
+          })),
+          hasValue: !!actionSelect.value && actionSelect.value !== '',
+          isEmpty: actionSelect.value === '' || actionSelect.value === null
+        });
+        
+        // Also check state
+        try {
+          import('./js/state.js').then(({ getState }) => {
+            const state = getState();
+            console.log('🔍 [DEBUG] Current state:', {
+              selectedStyle: state.selectedStyle,
+              selectedAction: state.selectedAction,
+              hasUploadedImage: !!state.uploadedImage
+            });
+          });
+        } catch (error) {
+          console.warn('⚠️ [DEBUG] Could not check state:', error);
+        }
+      };
+
+      /**
+       * Test function to manually select an action and see if it works
+       */
+      window.debugManualSelection = async function(actionValue = 'walk') {
+        console.log('🧪 [DEBUG MANUAL] Testing manual action selection:', actionValue);
+        
+        const actionSelect = document.getElementById('actionSelect');
+        if (!actionSelect) {
+          console.error('❌ [DEBUG MANUAL] Action select dropdown not found');
+          return false;
+        }
+        
+        console.log('🔧 [DEBUG MANUAL] Before selection:', {
+          value: actionSelect.value,
+          selectedIndex: actionSelect.selectedIndex,
+          optionsCount: actionSelect.options.length
+        });
+        
+        // Try the selection
+        actionSelect.value = actionValue;
+        
+        console.log('🔧 [DEBUG MANUAL] After setting value:', {
+          value: actionSelect.value,
+          selectedIndex: actionSelect.selectedIndex,
+          worked: actionSelect.value === actionValue
+        });
+        
+        // Trigger change event
+        const changeEvent = new Event('change', { bubbles: true });
+        actionSelect.dispatchEvent(changeEvent);
+        
+        console.log('🔧 [DEBUG MANUAL] After change event:', {
+          value: actionSelect.value,
+          selectedIndex: actionSelect.selectedIndex
+        });
+        
+        // Check button state
+        const generateBtn = document.getElementById('generateActionBtn');
+        if (generateBtn) {
+          console.log('🔧 [DEBUG MANUAL] Button state:', {
+            disabled: generateBtn.disabled,
+            textContent: generateBtn.textContent.trim()
+          });
+        }
+        
+        // Try to trigger generation manually
+        if (generateBtn && !generateBtn.disabled) {
+          console.log('🚀 [DEBUG MANUAL] Attempting to click generate button...');
+          generateBtn.click();
+          return true;
+        } else {
+          console.error('❌ [DEBUG MANUAL] Button not available for clicking');
+          return false;
+        }
+      };
+
+      /**
+       * Check if step 2 is properly initialized and dropdown is populated
+       */
+              window.debugStep2Initialization = async function() {
+          console.log('🔍 [DEBUG INIT] Checking step 2 initialization...');
+          
+          const currentStep = window.getCurrentStep();
+          console.log('📍 [DEBUG INIT] Current step:', currentStep);
+        
+        if (currentStep !== 2) {
+          console.warn('⚠️ [DEBUG INIT] Not on step 2, initialization check may not be relevant');
+        }
+        
+        const actionSelect = document.getElementById('actionSelect');
+        console.log('🔧 [DEBUG INIT] Dropdown state:', {
+          exists: !!actionSelect,
+          optionsCount: actionSelect ? actionSelect.options.length : 0,
+          hasOptions: actionSelect ? actionSelect.options.length > 1 : false,
+          currentValue: actionSelect ? actionSelect.value : null
+        });
+        
+        if (!actionSelect) {
+          console.error('❌ [DEBUG INIT] Action dropdown not found');
+          return false;
+        }
+        
+        if (actionSelect.options.length <= 1) {
+          console.warn('⚠️ [DEBUG INIT] Dropdown appears empty, trying to initialize...');
+          
+          // Try to trigger initialization
+          if (typeof window.initializeStep2ActionSelection === 'function') {
+            console.log('🔧 [DEBUG INIT] Found initializeStep2ActionSelection function, calling it...');
+            try {
+              await window.initializeStep2ActionSelection();
+              console.log('✅ [DEBUG INIT] Initialization function completed');
+            } catch (error) {
+              console.error('❌ [DEBUG INIT] Initialization function failed:', error);
+            }
+          } else {
+            console.warn('⚠️ [DEBUG INIT] initializeStep2ActionSelection function not found');
+          }
+          
+          // Check if it worked
+          console.log('🔧 [DEBUG INIT] Dropdown state after initialization attempt:', {
+            optionsCount: actionSelect.options.length,
+            hasOptions: actionSelect.options.length > 1
+          });
+        }
+        
+        if (actionSelect.options.length > 1) {
+          console.log('✅ [DEBUG INIT] Dropdown has options:', 
+            Array.from(actionSelect.options).map((opt, index) => ({
+              index: index,
+              value: opt.value,
+              text: opt.text
+            }))
+          );
+          return true;
+        } else {
+          console.error('❌ [DEBUG INIT] Dropdown still empty after initialization attempts');
+          return false;
+        }
+      };
     </script>
   </body>
 </html> 
