@@ -434,6 +434,9 @@
         border: 1px solid var(--border-color);
         font-style: italic;
         display: none;
+        font-size: 12px;
+        margin-bottom:10px;
+        margin-left:10px;
       }
 
       .typing-indicator.show {
@@ -510,17 +513,9 @@
     </style>
   </head>
   <body class="h-full antialiased chat-open" style="color: var(--text-primary);">
-    <!-- Simple helper functions -->
+    <!-- Helper functions -->
     <script>
-      // Show image in modal
-      window.showImageModal = function(src) {
-        const modal = document.getElementById('imageModal');
-        const modalImage = document.getElementById('modalImage');
-        if (modal && modalImage) {
-          modalImage.src = src;
-          modal.classList.remove('hidden');
-        }
-      };
+      // showImageModal function removed as requested
       
       // API key is loaded from environment configuration in state.js
       // No need to manually load from localStorage
@@ -572,7 +567,7 @@
           </div>
           
           <!-- Character Generation Placeholder -->
-          <div class="flex justify-center mb-6 p-20">
+          <div class="flex justify-center mb-6 p-20" id="placeholderBox">
             <div class="w-half max-w-2xl p-20">
               <div class="rounded-lg p-20 flex flex-col items-center justify-center min-h-[400px]" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
                 <div class="text-center w-half p-20">
@@ -622,7 +617,7 @@
             <div class="w-full md:w-1/2 rounded-lg p-4 flex flex-col items-center justify-center min-h-[200px]" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
               <h3 class="text-lg font-semibold mb-4" style="color: var(--text-primary);">Generated Style</h3>
               <div id="styledImageContainer" class="w-full flex items-center justify-center">
-                <img id="styledImagePreview" class="max-h-48 max-w-full rounded shadow cursor-zoom-in object-contain" alt="Styled Preview" onclick="showImageModal(this.src)" />
+                <img id="styledImagePreview" class="max-h-48 max-w-full rounded shadow object-contain" alt="Styled Preview" />
               </div>
             </div>
             
@@ -674,13 +669,7 @@
       </footer>
     </div>
     
-    <!-- Modal for image preview -->
-    <div id="imageModal" class="fixed inset-0 z-50 flex items-center justify-center hidden" style="background-color: rgba(0, 0, 0, 0.75);">
-      <div class="relative bg-transparent max-w-3xl p-4">
-        <img id="modalImage" class="max-w-full max-h-[80vh]" alt="Preview" />
-        <button id="closeModal" class="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-full hover:opacity-70" style="background-color: rgba(0, 0, 0, 0.5); color: white;">×</button>
-      </div>
-    </div>
+    <!-- Image Modal removed as requested -->
     
     <!-- Chat Sidebar -->
     <div id="chatSidebar" class="chat-sidebar open">
@@ -741,23 +730,9 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
     <script type="module" src="js/ui.js"></script>
     <script type="module" src="js/wizard.js"></script>
     <script>
-      // Basic event handlers for modal and API key
+      // Basic event handlers
       document.addEventListener('DOMContentLoaded', function() {
-        // Set up modal close functionality
-        const modal = document.getElementById('imageModal');
-        const closeBtn = document.getElementById('closeModal');
-        
-        if (closeBtn && modal) {
-          closeBtn.addEventListener('click', function() {
-            modal.classList.add('hidden');
-          });
-          
-          modal.addEventListener('click', function(e) {
-            if (e.target === modal) {
-              modal.classList.add('hidden');
-            }
-          });
-        }
+        // Modal functionality removed as requested
         
         // API key is now loaded from environment configuration
         // No need for input handling since key is loaded from .env.local
@@ -937,7 +912,8 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
             const { callDALLE3 } = await import('./js/api.js');
             
             // Enhance the user's prompt for better sprite generation
-            const enhancedPrompt = `Create a video game character sprite with transparent background. ${userMessage}. The character should be suitable for a 2D game, with clear details and vibrant colors. Style: digital art, game sprite, clean design.`;
+            const enhancedPrompt = `Generate an image of a video game character sprite with a solid white background. The details of the character: ${userMessage}. The character should be suitable for a 2D game, with clear details and vibrant colors. Style: digital art, game sprite, clean design. Generate just a SINGLE character with no other background and no other elements.
+            GENERATE A SINGLE CHARACTER. ONE CHARACTER. ONE. ONE CHARACTER ONLY. NOTHING ELSE.`;
             
             console.log('🔄 Enhanced prompt:', enhancedPrompt);
             
@@ -967,45 +943,80 @@ Tell me about your character's appearance, clothing, accessories, and style. Wha
         function replaceCharacterPlaceholder(imageUrl) {
           console.log('🖼️ Replacing placeholder with generated image');
           
-          const placeholderContainer = document.querySelector('.flex.justify-center.mb-6.p-20');
+          const placeholderContainer = document.getElementById('placeholderBox');
           if (placeholderContainer) {
             placeholderContainer.innerHTML = `
-              <div class="w-full max-w-2xl">
+              <div class="w-half max-w-2xl p-20">
                 <div class="rounded-lg p-8 flex flex-col items-center justify-center" style="background-color: var(--surface-color); border: 1px solid var(--border-color);">
                   <div class="text-center mb-4">
                     <h3 class="text-2xl font-medium mb-2" style="color: var(--text-primary);">Your Generated Character</h3>
                     <p class="text-sm" style="color: var(--text-secondary);">Character created with DALL-E 3</p>
                   </div>
+                  
+                  <!-- Top Continue Button -->
+                  <div class="w-full flex justify-center mb-6">
+                    ${createContinueButton('continueBtn-top', 'btn-primary px-8 py-3 opacity-50 cursor-not-allowed')}
+                  </div>
+                  
+                  <!-- Generated Character Image -->
                   <div class="bg-white rounded-lg p-4 shadow-lg">
                     <img src="${imageUrl}" 
                          alt="Generated Character" 
-                         class="max-w-full max-h-96 object-contain cursor-zoom-in rounded"
-                         onclick="showImageModal('${imageUrl}')" />
+                         style="width: 200px; height: 200px;"
+                         class="w-[200px] h-[200px] object-contain rounded" />
                   </div>
-                  <div class="text-center mt-4">
-                    <p class="text-sm" style="color: var(--text-secondary);">
-                      Click the image to view full size, or continue to generate animations
+                  
+                  <!-- Bottom Continue Button -->
+                  <div class="text-center mt-6">
+                    <p class="text-sm mb-4" style="color: var(--text-secondary);">
+                      Ready to add animations and actions to your character?
                     </p>
+                    ${createContinueButton('continueBtn-bottom', 'btn-primary px-8 py-3 opacity-50 cursor-not-allowed')}
                   </div>
                 </div>
               </div>
             `;
-            console.log('✅ Placeholder replaced successfully');
+            console.log('✅ Placeholder replaced successfully with dual continue buttons');
           } else {
             console.error('❌ Could not find placeholder container');
           }
         }
         
         /**
-         * Enables the continue button for proceeding to step 2
+         * Creates a reusable continue button component
+         * @param {string} id - Unique ID for the button
+         * @param {string} classes - Additional CSS classes
+         * @returns {string} - HTML string for the button
+         */
+        function createContinueButton(id = 'continueBtn', classes = 'btn-primary px-8 py-3') {
+          return `<button id="${id}" class="${classes}" onclick="handleContinueToActions()">Continue to Actions →</button>`;
+        }
+
+        /**
+         * Handles the continue to actions functionality
+         */
+        function handleContinueToActions() {
+          console.log('🚀 Continue to Actions clicked');
+          // Add your step 2 navigation logic here
+          // For now, just show a message
+          console.log('Proceeding to step 2...');
+          
+          // You can add actual step navigation here
+          // Example: goToStep(2) if that function exists
+        }
+
+        /**
+         * Enables all continue buttons for proceeding to step 2
          */
         function enableContinueButton() {
-          const continueBtn = document.getElementById('toStep2');
-          if (continueBtn) {
-            continueBtn.disabled = false;
-            continueBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            console.log('✅ Continue button enabled');
-          }
+          const continueButtons = document.querySelectorAll('[id*="continueBtn"], #toStep2');
+          continueButtons.forEach(btn => {
+            if (btn) {
+              btn.disabled = false;
+              btn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+          });
+          console.log('✅ Continue buttons enabled');
         }
         
         function generateCategoryResponse(category, originalMessage) {
